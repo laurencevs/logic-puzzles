@@ -6,27 +6,27 @@ import (
 )
 
 func generate2024Puzzles() {
-	puzzle, Sophie, Paul, Dave := commonSetup2024(false)
+	p := commonSetup2024(false)
 
 	for {
 		fmt.Print(".")
 		statements := []string{}
 
-		Sophie.Says(puzzle.Satisfies(sumIsDivisibleBy(20)))
-		Paul.Says(puzzle.Satisfies(productIsDivisibleBy(24)))
-		Sophie.Says(Sophie.Knows(Paul.Knows(Dave.DoesNotKnowAnswer())))
+		p.Sophie.Says(p.puzzle.Satisfies(sumIsDivisibleBy(20)))
+		p.Paul.Says(p.puzzle.Satisfies(productIsDivisibleBy(24)))
+		p.Sophie.Says(p.Sophie.Knows(p.Paul.Knows(p.Dave.DoesNotKnowAnswer())))
 		var lastLen int
-		for len(puzzle.externalPossibilities) > 1 {
-			lastLen = len(puzzle.externalPossibilities)
-			statements = append(statements, randomStatement(puzzle.characters, rand.Intn(4)))
+		for len(p.puzzle.externalPossibilities) > 1 {
+			lastLen = len(p.puzzle.externalPossibilities)
+			statements = append(statements, randomStatement(p.puzzle.characters, rand.Intn(4)))
 		}
 		fmt.Print(lastLen)
-		if len(puzzle.externalPossibilities) == 1 || lastLen <= 3 {
+		if len(p.puzzle.externalPossibilities) == 1 || lastLen <= 3 {
 			fmt.Println()
 			fmt.Println(statements)
-			puzzle.PrintPossibilities()
+			p.puzzle.PrintPossibilities()
 		}
-		puzzle.Reset()
+		p.puzzle.Reset()
 	}
 }
 
@@ -56,7 +56,7 @@ func randomStatement[P PuzzlePossibility](characters []*Character[P], n int) str
 	return fmt.Sprintf("%d %s %s %s; ", n, c1.name, c2.name, c3.name)
 }
 
-func commonSetup2024(allowRepeated bool) (*Puzzle[intPair], *Character[intPair], *Character[intPair], *Character[intPair]) {
+func commonSetup2024(allowRepeated bool) *puzzle2024[intPair] {
 	possibilities := UnorderedIntPairs(1, 2024, allowRepeated)
 	puzzle := NewPuzzle(possibilities)
 
@@ -67,63 +67,75 @@ func commonSetup2024(allowRepeated bool) (*Puzzle[intPair], *Character[intPair],
 	Dave := puzzle.NewCharacter("D")
 	Dave.KnowsValueOf(absDifference)
 
-	return puzzle, Sophie, Paul, Dave
+	return &puzzle2024[intPair]{
+		puzzle: puzzle,
+		Sophie: Sophie,
+		Paul:   Paul,
+		Dave:   Dave,
+	}
 }
 
 func run2024Puzzles() {
-	puzzle, Sophie, Paul, Dave := commonSetup2024(false)
-	puzzle1(puzzle, Sophie, Paul, Dave)
-	puzzle2(puzzle, Sophie, Paul, Dave)
-	puzzle3(puzzle, Sophie, Paul, Dave)
-	puzzle4(puzzle, Sophie, Paul, Dave)
-	puzzle6(puzzle, Sophie, Paul, Dave)
-	puzzle7(puzzle, Sophie, Paul, Dave)
-	puzzle, Sophie, Paul, Dave = commonSetup2024(true)
-	puzzle5(puzzle, Sophie, Paul, Dave)
+	puzzle := commonSetup2024(false)
+	puzzle1(puzzle)
+	puzzle2(puzzle)
+	puzzle3(puzzle)
+	puzzle4(puzzle)
+	puzzle6(puzzle)
+	puzzle7(puzzle)
+	puzzle = commonSetup2024(true)
+	puzzle5(puzzle)
 }
 
-func puzzle1(puzzle *Puzzle[intPair], Sophie, Paul, Dave *Character[intPair]) {
-	Paul.DoesNotKnowAnswer()
-	Paul.Says(Paul.Knows(puzzle.Satisfies(hasNumberDivisibleBy(20))))
-	Sophie.DoesNotKnowAnswer()
-	Sophie.Says(Sophie.Knows(puzzle.Satisfies(hasNumberDivisibleBy(24))))
-	Dave.Says(Dave.DoesNotKnowAnswer())
-
-	puzzle.PrintPossibilities()
-	puzzle.Reset()
+type puzzle2024[P PuzzlePossibility] struct {
+	puzzle *Puzzle[P]
+	Sophie *Character[P]
+	Paul   *Character[P]
+	Dave   *Character[P]
 }
 
-func puzzle2(puzzle *Puzzle[intPair], Sophie, Paul, Dave *Character[intPair]) {
-	Paul.Says(Paul.DoesNotKnowAnswer())
-	Paul.Says(puzzle.Satisfies(productIsDivisibleBy(20)))
-	Sophie.Says(Sophie.DoesNotKnowAnswer())
-	Sophie.Says(puzzle.Satisfies(sumIsDivisibleBy(24)))
-	Dave.Says(Dave.Knows(Paul.KnowsAnswer()))
+func puzzle1(p *puzzle2024[intPair]) {
+	p.Paul.DoesNotKnowAnswer()
+	p.Paul.Says(p.Paul.Knows(p.puzzle.Satisfies(hasNumberDivisibleBy(20))))
+	p.Sophie.DoesNotKnowAnswer()
+	p.Sophie.Says(p.Sophie.Knows(p.puzzle.Satisfies(hasNumberDivisibleBy(24))))
+	p.Dave.Says(p.Dave.DoesNotKnowAnswer())
 
-	puzzle.PrintPossibilities()
-	puzzle.Reset()
+	p.puzzle.PrintPossibilities()
+	p.puzzle.Reset()
 }
 
-func puzzle3(puzzle *Puzzle[intPair], Sophie, Paul, Dave *Character[intPair]) {
-	Paul.Says(puzzle.Satisfies(productIsDivisibleBy(20)))
-	Sophie.Says(puzzle.Satisfies(sumIsDivisibleBy(24)))
-	Dave.Says(Dave.Knows(Paul.KnowsAnswer()))
+func puzzle2(p *puzzle2024[intPair]) {
+	p.Paul.Says(p.Paul.DoesNotKnowAnswer())
+	p.Paul.Says(p.puzzle.Satisfies(productIsDivisibleBy(20)))
+	p.Sophie.Says(p.Sophie.DoesNotKnowAnswer())
+	p.Sophie.Says(p.puzzle.Satisfies(sumIsDivisibleBy(24)))
+	p.Dave.Says(p.Dave.Knows(p.Paul.KnowsAnswer()))
 
-	puzzle.PrintPossibilities()
-	puzzle.Reset()
+	p.puzzle.PrintPossibilities()
+	p.puzzle.Reset()
 }
 
-func puzzle4(puzzle *Puzzle[intPair], Sophie, Paul, Dave *Character[intPair]) {
-	Paul.Says(puzzle.Satisfies(productIsDivisibleBy(20)))
-	Paul.Says(Paul.KnowsAnswer())
-	Sophie.Says(puzzle.Satisfies(sumIsDivisibleBy(24)))
-	Paul.Says(Paul.Knows(Sophie.KnowsAnswer()))
+func puzzle3(p *puzzle2024[intPair]) {
+	p.Paul.Says(p.puzzle.Satisfies(productIsDivisibleBy(20)))
+	p.Sophie.Says(p.puzzle.Satisfies(sumIsDivisibleBy(24)))
+	p.Dave.Says(p.Dave.Knows(p.Paul.KnowsAnswer()))
 
-	puzzle.PrintPossibilities()
-	puzzle.Reset()
+	p.puzzle.PrintPossibilities()
+	p.puzzle.Reset()
 }
 
-func puzzle5(puzzle *Puzzle[intPair], Sophie, Paul, Dave *Character[intPair]) {
+func puzzle4(p *puzzle2024[intPair]) {
+	p.Paul.Says(p.puzzle.Satisfies(productIsDivisibleBy(20)))
+	p.Paul.Says(p.Paul.KnowsAnswer())
+	p.Sophie.Says(p.puzzle.Satisfies(sumIsDivisibleBy(24)))
+	p.Paul.Says(p.Paul.Knows(p.Sophie.KnowsAnswer()))
+
+	p.puzzle.PrintPossibilities()
+	p.puzzle.Reset()
+}
+
+func puzzle5(p *puzzle2024[intPair]) {
 	/*
 		Two numbers from 1 to 2024 are randomly generated. (They could be the
 		same.) Tristram is told their product, Walter their sum, and Toby their
@@ -138,16 +150,16 @@ func puzzle5(puzzle *Puzzle[intPair], Sophie, Paul, Dave *Character[intPair]) {
 
 		What are the numbers?
 	*/
-	Paul.Says(puzzle.Satisfies(productIsDivisibleBy(20)))
-	Dave.Says(Dave.Knows(Sophie.Knows(Paul.DoesNotKnowAnswer())))
-	Sophie.Says(puzzle.Satisfies(sumIsDivisibleBy(24)))
-	Paul.Says(Paul.Knows(Sophie.Knows(Dave.KnowsAnswer())))
+	p.Paul.Says(p.puzzle.Satisfies(productIsDivisibleBy(20)))
+	p.Dave.Says(p.Dave.Knows(p.Sophie.Knows(p.Paul.DoesNotKnowAnswer())))
+	p.Sophie.Says(p.puzzle.Satisfies(sumIsDivisibleBy(24)))
+	p.Paul.Says(p.Paul.Knows(p.Sophie.Knows(p.Dave.KnowsAnswer())))
 
-	puzzle.PrintPossibilities()
-	puzzle.Reset()
+	p.puzzle.PrintPossibilities()
+	p.puzzle.Reset()
 }
 
-func puzzle6(puzzle *Puzzle[intPair], Sophie, Paul, Dave *Character[intPair]) {
+func puzzle6(p *puzzle2024[intPair]) {
 	/*
 		The numbers from 1 to 2024 are put into a hat, and two are drawn at
 		random. Paul is told their product, Sophie their sum, and Dave their
@@ -160,21 +172,21 @@ func puzzle6(puzzle *Puzzle[intPair], Sophie, Paul, Dave *Character[intPair]) {
 		Sophie interjects, "Well now I do!"
 		What are the numbers?
 	*/
-	Paul.Says(puzzle.Satisfies(productIsDivisibleBy(20)))
-	Dave.Says(Dave.Knows(Paul.Knows(Sophie.DoesNotKnowAnswer())))
-	Sophie.Says(puzzle.Satisfies(sumIsDivisibleBy(24)))
-	Sophie.Says(Sophie.KnowsAnswer())
+	p.Paul.Says(p.puzzle.Satisfies(productIsDivisibleBy(20)))
+	p.puzzle.Satisfies(sumIsDivisibleBy(24))
+	p.Dave.Says(p.Dave.Knows(p.Paul.Knows(p.Sophie.DoesNotKnowAnswer())))
+	p.Sophie.Says(p.Sophie.KnowsAnswer())
 
-	puzzle.PrintPossibilities()
-	puzzle.Reset()
+	p.puzzle.PrintPossibilities()
+	p.puzzle.Reset()
 }
 
-func puzzle7(puzzle *Puzzle[intPair], Sophie, Paul, Dave *Character[intPair]) {
-	Paul.Says(puzzle.Satisfies(productIsDivisibleBy(20)))
-	Sophie.Says(Sophie.Knows(Paul.Knows(Dave.DoesNotKnowAnswer())))
-	Sophie.Says(puzzle.Satisfies(sumIsDivisibleBy(24)))
-	Paul.Says(Paul.Knows(Dave.KnowsAnswer()))
+func puzzle7(p *puzzle2024[intPair]) {
+	p.Paul.Says(p.puzzle.Satisfies(productIsDivisibleBy(20)))
+	p.Sophie.Says(p.Sophie.Knows(p.Paul.Knows(p.Dave.DoesNotKnowAnswer())))
+	p.Sophie.Says(p.puzzle.Satisfies(sumIsDivisibleBy(24)))
+	p.Paul.Says(p.Paul.Knows(p.Dave.KnowsAnswer()))
 
-	puzzle.PrintPossibilities()
-	puzzle.Reset()
+	p.puzzle.PrintPossibilities()
+	p.puzzle.Reset()
 }
