@@ -77,14 +77,14 @@ func commonSetup2024(allowRepeated bool) *puzzle2024[intPair] {
 
 func run2024Puzzles() {
 	puzzle := commonSetup2024(false)
-	puzzle1(puzzle)
-	puzzle2(puzzle)
-	puzzle3(puzzle)
-	puzzle4(puzzle)
-	puzzle6(puzzle)
-	puzzle7(puzzle)
+	example2024_1(puzzle)
+	example2024_2(puzzle)
+	example2024_3(puzzle)
+	example2024_4(puzzle)
+	example2024_6(puzzle)
+	example2024_7(puzzle)
 	puzzle = commonSetup2024(true)
-	puzzle5(puzzle)
+	example2024_5(puzzle)
 }
 
 type puzzle2024[P PuzzlePossibility] struct {
@@ -94,48 +94,48 @@ type puzzle2024[P PuzzlePossibility] struct {
 	Dave   *Character[P]
 }
 
-func puzzle1(p *puzzle2024[intPair]) {
+func example2024_1(p *puzzle2024[intPair]) {
 	p.Paul.DoesNotKnowAnswer()
 	p.Paul.Says(p.Paul.Knows(p.puzzle.Satisfies(hasNumberDivisibleBy(20))))
 	p.Sophie.DoesNotKnowAnswer()
 	p.Sophie.Says(p.Sophie.Knows(p.puzzle.Satisfies(hasNumberDivisibleBy(24))))
 	p.Dave.Says(p.Dave.DoesNotKnowAnswer())
 
-	p.puzzle.PrintPossibilities()
+	p.puzzle.PrintPossibilities() // (256, 480)
 	p.puzzle.Reset()
 }
 
-func puzzle2(p *puzzle2024[intPair]) {
+func example2024_2(p *puzzle2024[intPair]) {
 	p.Paul.Says(p.Paul.DoesNotKnowAnswer())
 	p.Paul.Says(p.puzzle.Satisfies(productIsDivisibleBy(20)))
 	p.Sophie.Says(p.Sophie.DoesNotKnowAnswer())
 	p.Sophie.Says(p.puzzle.Satisfies(sumIsDivisibleBy(24)))
 	p.Dave.Says(p.Dave.Knows(p.Paul.KnowsAnswer()))
 
-	p.puzzle.PrintPossibilities()
+	p.puzzle.PrintPossibilities() // (10, 1982)
 	p.puzzle.Reset()
 }
 
-func puzzle3(p *puzzle2024[intPair]) {
+func example2024_3(p *puzzle2024[intPair]) {
 	p.Paul.Says(p.puzzle.Satisfies(productIsDivisibleBy(20)))
 	p.Sophie.Says(p.puzzle.Satisfies(sumIsDivisibleBy(24)))
 	p.Dave.Says(p.Dave.Knows(p.Paul.KnowsAnswer()))
 
-	p.puzzle.PrintPossibilities()
+	p.puzzle.PrintPossibilities() // (10, 1982)
 	p.puzzle.Reset()
 }
 
-func puzzle4(p *puzzle2024[intPair]) {
+func example2024_4(p *puzzle2024[intPair]) {
 	p.Paul.Says(p.puzzle.Satisfies(productIsDivisibleBy(20)))
 	p.Paul.Says(p.Paul.KnowsAnswer())
 	p.Sophie.Says(p.puzzle.Satisfies(sumIsDivisibleBy(24)))
 	p.Paul.Says(p.Paul.Knows(p.Sophie.KnowsAnswer()))
 
-	p.puzzle.PrintPossibilities()
+	p.puzzle.PrintPossibilities() // (1046, 1090)
 	p.puzzle.Reset()
 }
 
-func puzzle5(p *puzzle2024[intPair]) {
+func example2024_5(p *puzzle2024[intPair]) {
 	/*
 		Two numbers from 1 to 2024 are randomly generated. (They could be the
 		same.) Tristram is told their product, Walter their sum, and Toby their
@@ -155,20 +155,20 @@ func puzzle5(p *puzzle2024[intPair]) {
 	p.Sophie.Says(p.puzzle.Satisfies(sumIsDivisibleBy(24)))
 	p.Paul.Says(p.Paul.Knows(p.Sophie.Knows(p.Dave.KnowsAnswer())))
 
-	p.puzzle.PrintPossibilities()
+	p.puzzle.PrintPossibilities() // (20, 2020)
 	p.puzzle.Reset()
 }
 
-func puzzle6(p *puzzle2024[intPair]) {
+func example2024_6(p *puzzle2024[intPair]) {
 	/*
 		The numbers from 1 to 2024 are put into a hat, and two are drawn at
 		random. Paul is told their product, Sophie their sum, and Dave their
 		difference.
 		Paul says "The product of the numbers is divisible by 20."
 		Sophie notices that the sum of the numbers is divisible by 24, but
-		doesn't tell anyone.
-		Dave replies, "Then I know that you know that Sophie doesn't know what
-		  the numbers are."
+		doesn't say anything.
+		Dave replies to Paul, "Then I know that you know that Sophie doesn't
+		  know what the numbers are."
 		Sophie interjects, "Well now I do!"
 		What are the numbers?
 	*/
@@ -177,16 +177,16 @@ func puzzle6(p *puzzle2024[intPair]) {
 	p.Dave.Says(p.Dave.Knows(p.Paul.Knows(p.Sophie.DoesNotKnowAnswer())))
 	p.Sophie.Says(p.Sophie.KnowsAnswer())
 
-	p.puzzle.PrintPossibilities()
+	p.puzzle.PrintPossibilities() // (2010, 2022)
 	p.puzzle.Reset()
 }
 
-func puzzle7(p *puzzle2024[intPair]) {
+func example2024_7(p *puzzle2024[intPair]) {
 	p.Paul.Says(p.puzzle.Satisfies(productIsDivisibleBy(20)))
 	p.Sophie.Says(p.Sophie.Knows(p.Paul.Knows(p.Dave.DoesNotKnowAnswer())))
 	p.Sophie.Says(p.puzzle.Satisfies(sumIsDivisibleBy(24)))
 	p.Paul.Says(p.Paul.Knows(p.Dave.KnowsAnswer()))
 
-	p.puzzle.PrintPossibilities()
+	p.puzzle.PrintPossibilities() // (10, 1982)
 	p.puzzle.Reset()
 }
