@@ -1,4 +1,4 @@
-package main
+package puzzles
 
 import (
 	"fmt"
@@ -42,6 +42,18 @@ func NewPuzzle[P PuzzlePossibility](possibilities []P) *Puzzle[P] {
 		externalPossibilities: externalPossibilities,
 		originalPossibilities: possibilities,
 	}
+}
+
+func (p *Puzzle[P]) ExternalPossibilities() map[P]struct{} {
+	return p.externalPossibilities
+}
+
+func (p *Puzzle[P]) InternalPossibilities() map[P]struct{} {
+	return p.internalPossibilities
+}
+
+func (p *Puzzle[P]) Characters() []*Character[P] {
+	return p.characters
 }
 
 func (p *Puzzle[P]) NewCharacter(name string) *Character[P] {
@@ -113,6 +125,10 @@ type Character[P PuzzlePossibility] struct {
 	knownValues            []Valuation[P]
 	possibilities          map[P]struct{}
 	knowledgeByPossibility map[P]string
+}
+
+func (c *Character[P]) Name() string {
+	return c.name
 }
 
 func (c *Character[P]) KnowsValueOf(v Valuation[P]) {

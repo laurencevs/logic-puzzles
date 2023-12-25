@@ -2,7 +2,7 @@
 
 This is a tool for generating and solving puzzles like the following.
 
-> The numbers from 1 to 2024 are put into a hat, and two are drawn at random. Paul is told their product, Sophie their sum, and Dave their difference.
+> The integers from 1 to 2024 are put into a hat, and two are drawn at random. Paul is told their product, Sophie their sum, and Dave the difference between them.
 >
 > Paul says "The product of the numbers is divisible by 20."
 >
@@ -21,15 +21,15 @@ possibilities := UnorderedIntPairs(1, 2024, false)
 puzzle := NewPuzzle(possibilities)
 
 Sophie := puzzle.NewCharacter("S")
-Sophie.KnowsValueOf(sum)
+Sophie.KnowsValueOf(Sum)
 Paul := puzzle.NewCharacter("P")
-Paul.KnowsValueOf(product)
+Paul.KnowsValueOf(Product)
 Dave := puzzle.NewCharacter("D")
-Dave.KnowsValueOf(absDifference)
+Dave.KnowsValueOf(AbsDifference)
 
-Paul.Says(puzzle.Satisfies(productIsDivisibleBy(20)))
+Paul.Says(puzzle.Satisfies(ProductIsDivisibleBy(20)))
 Sophie.Says(Sophie.Knows(Paul.Knows(Dave.DoesNotKnowAnswer())))
-Sophie.Says(puzzle.Satisfies(sumIsDivisibleBy(24)))
+Sophie.Says(puzzle.Satisfies(SumIsDivisibleBy(24)))
 Paul.Says(Paul.Knows(Dave.KnowsAnswer()))
 
 puzzle.PrintPossibilities()

@@ -27,12 +27,12 @@ def verify_example_2024_6():
     sums_ruled_out = set(s for s in possibilities_by_sum
                          if len(possibilities_by_sum[s]) == 1)
     # Paul.Knows(Sophie.DoesNotKnowAnswer()) => product does not correspond to
-    # a sum that corresponds to only one possibility
+    # any sum that corresponds to only one possibility
     products_ruled_out = set(p for p in possibilities_by_product
                              if any(sum(x) in sums_ruled_out
                                     for x in possibilities_by_product[p]))
     # Dave.Knows(Paul.Knows(Sophie.DoesNotKnowAnswer())) => difference does not
-    # correspond to a product that corresponds to a sum that corresponds to
+    # correspond to any product that corresponds to any sum that corresponds to
     # only one possibility
     differences_ruled_out = set(d for d in possibilities_by_difference
                              if any(x[0]*x[1] in products_ruled_out
@@ -53,8 +53,7 @@ def verify_example_2024_6():
     # puzzle.Satisfies(sumIsDivisibleBy(24))
     
     final_possibilities = [x for x in possibilities_4 if sum(x)%24 == 0]
-    assert(len(final_possibilities) == 1)
-    assert(final_possibilities[0] == (2010, 2022))
+    assert(final_possibilities == [(2010, 2022)])
 
 if __name__ == "__main__":
     verify_example_2024_6()

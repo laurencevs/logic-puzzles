@@ -1,26 +1,26 @@
-package main
+package puzzles
 
 import "fmt"
 
-type intPair struct {
+type IntPair struct {
 	a, b int
 }
 
-func (p intPair) String() string {
+func (p IntPair) String() string {
 	return fmt.Sprintf("(%d, %d)", p.a, p.b)
 }
 
 // Some intPair Valuations
 
-func sum(p intPair) int {
+func Sum(p IntPair) int {
 	return p.a + p.b
 }
 
-func product(p intPair) int {
+func Product(p IntPair) int {
 	return p.a * p.b
 }
 
-func absDifference(p intPair) int {
+func AbsDifference(p IntPair) int {
 	if p.a >= p.b {
 		return p.a - p.b
 	}
@@ -29,39 +29,39 @@ func absDifference(p intPair) int {
 
 // Some intPair Conditions
 
-func hasNumberDivisibleBy(n int) func(intPair) bool {
-	return func(p intPair) bool {
+func HasNumberDivisibleBy(n int) func(IntPair) bool {
+	return func(p IntPair) bool {
 		return p.a%n == 0 || p.b%n == 0
 	}
 }
 
-func productIsDivisibleBy(n int) func(intPair) bool {
-	return func(p intPair) bool {
+func ProductIsDivisibleBy(n int) func(IntPair) bool {
+	return func(p IntPair) bool {
 		return (p.a*p.b)%n == 0
 	}
 }
 
-func sumIsDivisibleBy(n int) func(intPair) bool {
-	return func(p intPair) bool {
+func SumIsDivisibleBy(n int) func(IntPair) bool {
+	return func(p IntPair) bool {
 		return (p.a+p.b)%n == 0
 	}
 }
 
-func UnorderedIntPairs(min, max int, withRepetition bool) []intPair {
+func UnorderedIntPairs(min, max int, withRepetition bool) []IntPair {
 	if max < min {
-		return []intPair{}
+		return []IntPair{}
 	}
 	size := (max - min + 1) * (max - min) / 2
 	if withRepetition {
 		size += max - min + 1
 	}
-	pairs := make([]intPair, 0, size)
+	pairs := make([]IntPair, 0, size)
 	for i := min; i <= max; i++ {
 		if withRepetition {
-			pairs = append(pairs, intPair{i, i})
+			pairs = append(pairs, IntPair{i, i})
 		}
 		for j := i + 1; j <= max; j++ {
-			pairs = append(pairs, intPair{i, j})
+			pairs = append(pairs, IntPair{i, j})
 		}
 	}
 	return pairs

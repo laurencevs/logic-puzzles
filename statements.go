@@ -1,4 +1,4 @@
-package main
+package puzzles
 
 // Statements are represented by the set of internal possibilities they rule out.
 type Statement[T comparable] map[T]struct{}
