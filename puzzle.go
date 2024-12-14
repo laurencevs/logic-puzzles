@@ -93,7 +93,7 @@ func (p *Puzzle[P]) PrintPossibilities() {
 			panic(err)
 		}
 		count += 1
-		if count >= 5 {
+		if count > 50 {
 			b.WriteString("...")
 			break
 		}

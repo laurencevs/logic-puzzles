@@ -35,9 +35,31 @@ func HasNumberDivisibleBy(n int) func(IntPair) bool {
 	}
 }
 
+func HasNumberIn(s map[int]struct{}) func(IntPair) bool {
+	return func(p IntPair) bool {
+		_, ok1 := s[p.a]
+		_, ok2 := s[p.b]
+		return ok1 || ok2
+	}
+}
+
+func HasOneNumberIn(s map[int]struct{}) func(IntPair) bool {
+	return func(p IntPair) bool {
+		_, ok1 := s[p.a]
+		_, ok2 := s[p.b]
+		return ok1 != ok2
+	}
+}
+
 func ProductIsDivisibleBy(n int) func(IntPair) bool {
 	return func(p IntPair) bool {
 		return (p.a*p.b)%n == 0
+	}
+}
+
+func ProductIsNotDivisibleBy(n int) func(IntPair) bool {
+	return func(p IntPair) bool {
+		return (p.a*p.b)%n != 0
 	}
 }
 
@@ -47,9 +69,15 @@ func SumIsDivisibleBy(n int) func(IntPair) bool {
 	}
 }
 
+func AbsDifferenceIsDivisibleBy(n int) func(IntPair) bool {
+	return func(p IntPair) bool {
+		return (p.a-p.b)%n == 0
+	}
+}
+
 func UnorderedIntPairs(min, max int, withRepetition bool) []IntPair {
 	if max < min {
-		return []IntPair{}
+		return nil
 	}
 	size := (max - min + 1) * (max - min) / 2
 	if withRepetition {
