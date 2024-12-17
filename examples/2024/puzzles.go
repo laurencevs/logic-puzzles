@@ -62,12 +62,9 @@ func commonSetup2024(allowRepeated bool) *puzzle2024[puzzles.IntPair] {
 	possibilities := puzzles.UnorderedIntPairs(1, 2024, allowRepeated)
 	puzzle := puzzles.NewPuzzle(possibilities)
 
-	Sophie := puzzle.NewCharacter("S")
-	Sophie.KnowsValueOf(puzzles.Sum)
-	Paul := puzzle.NewCharacter("P")
-	Paul.KnowsValueOf(puzzles.Product)
-	Dave := puzzle.NewCharacter("D")
-	Dave.KnowsValueOf(puzzles.AbsDifference)
+	Sophie := puzzle.NewCharacter().KnowsValueOf(puzzles.Sum)
+	Paul := puzzle.NewCharacter().KnowsValueOf(puzzles.Product)
+	Dave := puzzle.NewCharacter().KnowsValueOf(puzzles.AbsDifference)
 
 	return &puzzle2024[puzzles.IntPair]{
 		puzzle: puzzle,

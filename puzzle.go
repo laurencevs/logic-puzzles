@@ -56,14 +56,14 @@ func (p *Puzzle[P]) Characters() []*Character[P] {
 	return p.characters
 }
 
-func (p *Puzzle[P]) NewCharacter(name string) *Character[P] {
+func (p *Puzzle[P]) NewCharacter() *Character[P] {
 	privatePossibilities := make(map[P]struct{},
 		len(p.internalPossibilities))
 	for p := range p.internalPossibilities {
 		privatePossibilities[p] = struct{}{}
 	}
 	character := &Character[P]{
-		name:                   name,
+		id:                     len(p.characters),
 		puzzle:                 p,
 		possibilities:          privatePossibilities,
 		knowledgeByPossibility: make(map[P]string),
@@ -72,23 +72,22 @@ func (p *Puzzle[P]) NewCharacter(name string) *Character[P] {
 	return character
 }
 
-func (p *Puzzle[P]) PrintPossibilities() {
-	b := strings.Builder{}
-	possibilitiesString := "possibilities"
-	if len(p.externalPossibilities) == 1 {
-		possibilitiesString = "possibility"
+func printPossibilities[P PuzzlePossibility](ps map[P]struct{}) {
+	var b strings.Builder
+	pss := "possibilities"
+	if len(ps) == 1 {
+		pss = "possibility"
 	}
-	b.WriteString(fmt.Sprintf("Puzzle has %d remaining %s: ",
-		len(p.externalPossibilities), possibilitiesString))
+	b.WriteString(fmt.Sprintf("Puzzle has %d remaining %s: ", len(ps), pss))
 	count := 0
-	for poss := range p.externalPossibilities {
+	for p := range ps {
 		if count != 0 {
 			_, err := b.WriteString(", ")
 			if err != nil {
 				panic(err)
 			}
 		}
-		_, err := b.WriteString(poss.String())
+		_, err := b.WriteString(p.String())
 		if err != nil {
 			panic(err)
 		}
@@ -99,6 +98,10 @@ func (p *Puzzle[P]) PrintPossibilities() {
 		}
 	}
 	fmt.Println(b.String())
+}
+
+func (p *Puzzle[P]) PrintPossibilities() {
+	printPossibilities(p.externalPossibilities)
 }
 
 func (p *Puzzle[P]) Reset() {
@@ -120,7 +123,7 @@ func (p *Puzzle[P]) Reset() {
 }
 
 type Character[P PuzzlePossibility] struct {
-	name                   string
+	id                     int
 	puzzle                 *Puzzle[P]
 	knownValues            []Valuation[P]
 	possibilities          map[P]struct{}
@@ -128,12 +131,18 @@ type Character[P PuzzlePossibility] struct {
 }
 
 func (c *Character[P]) Name() string {
-	return c.name
+	return strconv.Itoa(c.id)
 }
 
-func (c *Character[P]) KnowsValueOf(v Valuation[P]) {
+func (c *Character[P]) KnowsValueOf(v Valuation[P]) *Character[P] {
 	c.knownValues = append(c.knownValues, v)
 	for poss := range c.puzzle.internalPossibilities {
 		c.knowledgeByPossibility[poss] += "/" + strconv.Itoa(v(poss))
 	}
+	return c
+}
+
+func (c *Character[P]) PrintPossibilties() {
+	fmt.Printf("%d: ", c.id)
+	printPossibilities(c.possibilities)
 }

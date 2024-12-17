@@ -28,11 +28,9 @@ func (c *Character[P]) HasNPossibilities(condition Condition[int]) Statement[P] 
 	for poss := range c.puzzle.internalPossibilities {
 		if !condition(numPossibilitiesByKnowledge[c.knowledgeByPossibility[poss]]) {
 			possibilitiesToDelete[poss] = struct{}{}
+			delete(c.puzzle.externalPossibilities, poss)
+			delete(c.possibilities, poss)
 		}
-	}
-	for poss := range possibilitiesToDelete {
-		delete(c.puzzle.externalPossibilities, poss)
-		delete(c.possibilities, poss)
 	}
 	return possibilitiesToDelete
 }
@@ -43,10 +41,8 @@ func (p *Puzzle[P]) Satisfies(condition Condition[P]) Statement[P] {
 	for poss := range p.internalPossibilities {
 		if !condition(poss) {
 			possibilitiesToDelete[poss] = struct{}{}
+			delete(p.externalPossibilities, poss)
 		}
-	}
-	for poss := range possibilitiesToDelete {
-		delete(p.externalPossibilities, poss)
 	}
 	return possibilitiesToDelete
 }
@@ -62,11 +58,9 @@ func (c *Character[P]) Knows(f Statement[P]) Statement[P] {
 	for poss, knowledge := range c.knowledgeByPossibility {
 		if _, ok := excludedKnowledge[knowledge]; ok {
 			possibilitiesToDelete[poss] = struct{}{}
+			delete(c.puzzle.externalPossibilities, poss)
+			delete(c.possibilities, poss)
 		}
-	}
-	for poss := range possibilitiesToDelete {
-		delete(c.puzzle.externalPossibilities, poss)
-		delete(c.possibilities, poss)
 	}
 
 	return possibilitiesToDelete

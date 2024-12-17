@@ -10,17 +10,18 @@ import (
 func main() {
 
 	option0()
+	return
 	option4()
 	return
 
 	possibilities := puzzles.UnorderedIntPairs(1, 2025, false)
 	puzzle := puzzles.NewPuzzle(possibilities)
 
-	Sophie := puzzle.NewCharacter("S")
+	Sophie := puzzle.NewCharacter()
 	Sophie.KnowsValueOf(puzzles.Sum)
-	Paul := puzzle.NewCharacter("P")
+	Paul := puzzle.NewCharacter()
 	Paul.KnowsValueOf(puzzles.Product)
-	Dave := puzzle.NewCharacter("D")
+	Dave := puzzle.NewCharacter()
 	Dave.KnowsValueOf(puzzles.AbsDifference)
 
 	people := []*puzzles.Character[puzzles.IntPair]{Sophie, Paul, Dave}
@@ -60,12 +61,9 @@ func commonSetup() testPuzzle {
 	possibilities := puzzles.UnorderedIntPairs(1, 2025, false)
 	puzzle := puzzles.NewPuzzle(possibilities)
 
-	Sophie := puzzle.NewCharacter("S")
-	Sophie.KnowsValueOf(puzzles.Sum)
-	Paul := puzzle.NewCharacter("P")
-	Paul.KnowsValueOf(puzzles.Product)
-	Dave := puzzle.NewCharacter("D")
-	Dave.KnowsValueOf(puzzles.AbsDifference)
+	Sophie := puzzle.NewCharacter().KnowsValueOf(puzzles.Sum)
+	Paul := puzzle.NewCharacter().KnowsValueOf(puzzles.Product)
+	Dave := puzzle.NewCharacter().KnowsValueOf(puzzles.AbsDifference)
 
 	return testPuzzle{
 		puzzle, Paul, Sophie, Dave,
@@ -124,18 +122,43 @@ func test1() {
 	p.Puzzle.PrintPossibilities()
 }
 
+/*
+Two numbers are drawn from a giant bingo machine containing 2025 balls labelled from 1 to 2025. Stifado is told their sum, Pastitsio their product, and Dolmadakia the difference between them.
+
+Dolmadakia says "I can tell that Stifado doesn't know what the numbers are."
+
+Stifado thinks for a moment, before replying "And I can tell that Pastitsio doesn't know, either."
+
+Pastitsio nods sadly. "You're quite right... But I can say with certainty that at least one of the numbers is a side length in a Pythagorean triangle in which the square of one of the sides is 2025."
+
+"Oh, now I know what they are!" exclaims Stifado.
+
+Pastitsio and Dolmadakia sit in silence, giving nothing away. In truth, neither of them can figure out what the numbers are.
+
+What are the two numbers?
+*/
 func option0() {
-	p := commonSetup()
+	possibilities := puzzles.UnorderedIntPairs(1, 2025, false)
+	puzzle := puzzles.NewPuzzle(possibilities)
 
-	p.D.Says(p.D.Knows(p.S.DoesNotKnowAnswer()))
-	p.S.Says(p.S.Knows(p.P.DoesNotKnowAnswer()))
-	p.P.Says(p.P.Knows(p.Puzzle.Satisfies(puzzles.HasNumberIn(sideLengths2025)))) // HasOneNumberIn also works
-	p.S.Says(p.S.KnowsAnswer())
+	Stifado := puzzle.NewCharacter().KnowsValueOf(puzzles.Sum)
+	Pastitsio := puzzle.NewCharacter().KnowsValueOf(puzzles.Product)
+	Dolmadakia := puzzle.NewCharacter().KnowsValueOf(puzzles.AbsDifference)
 
-	p.P.DoesNotKnowAnswer()
-	p.D.DoesNotKnowAnswer()
+	fmt.Println(len(puzzle.ExternalPossibilities()))
+	Dolmadakia.Says(Dolmadakia.Knows(Stifado.DoesNotKnowAnswer()))
+	fmt.Println(len(puzzle.ExternalPossibilities()))
+	Stifado.Says(Stifado.Knows(Pastitsio.DoesNotKnowAnswer()))
+	fmt.Println(len(puzzle.ExternalPossibilities()))
+	Pastitsio.Says(Pastitsio.Knows(puzzle.Satisfies(puzzles.HasNumberIn(sideLengths2025)))) // HasOneNumberIn also works
+	fmt.Println(len(puzzle.ExternalPossibilities()))
+	Stifado.Says(Stifado.KnowsAnswer())
+	fmt.Println(len(puzzle.ExternalPossibilities()))
 
-	p.Puzzle.PrintPossibilities() // 59, 108
+	Pastitsio.DoesNotKnowAnswer()
+	Dolmadakia.DoesNotKnowAnswer()
+
+	puzzle.PrintPossibilities() // 59, 108
 }
 
 func option1() {
