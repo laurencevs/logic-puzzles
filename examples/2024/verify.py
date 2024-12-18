@@ -2,7 +2,7 @@ from collections import defaultdict
 
 def verify_example_2024_6():
 
-    # possibilities := UnorderedIntPairs(1, 2024, false)
+    # possibilities := UnorderedIntPairs(1, 2024, false, false)
 
     possibilities_1 = [(i, j) for i in range(1, 2025)
                               for j in range(i+1, 2025)]
