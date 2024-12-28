@@ -65,7 +65,7 @@ func AbsDifference(p IntPair) int {
 	return p.B - p.A
 }
 
-// Some intPair Conditions
+// Some IntPair Conditions
 
 func HasNumberDivisibleBy(n int) func(IntPair) bool {
 	return func(p IntPair) bool {

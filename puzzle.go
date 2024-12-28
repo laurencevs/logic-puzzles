@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+
+	"github.com/laurencevs/logic-puzzles/internal/set"
 )
 
 type Puzzle[P comparable] struct {
@@ -69,6 +71,14 @@ func (p *Puzzle[P]) NewActorWithKnowledge(v Valuation[P]) *Actor[P] {
 
 func (p *Puzzle[P]) ExternalPossibilities() []P {
 	return p.externalPossibilities
+}
+
+func (p *Puzzle[P]) NormalisedPossibilities(normalise func(P) P) []P {
+	s := set.New[P]()
+	for _, p := range p.externalPossibilities {
+		s.Add(normalise(p))
+	}
+	return s.Values()
 }
 
 func (p *Puzzle[P]) Reset() {

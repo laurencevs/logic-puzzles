@@ -75,6 +75,52 @@ func (a *Actor[P]) DoesNotKnowAnswer() Statement[P] {
 	return a.KnowsAnswer().Not()
 }
 
+func (a *Actor[P]) KnowsNormalisedAnswer(normalise func(P) P) Statement[P] {
+	possibleValues := set.New[int]()
+knowledgeLoop:
+	for knowledge, possibilities := range a.puzzle.possibilitiesByKnowledge[a.knowledge.id] {
+		if len(possibilities) == 0 {
+			continue
+		}
+		if len(possibilities) == 1 {
+			possibleValues.Add(knowledge)
+			continue
+		}
+		first := normalise(possibilities[0])
+		for _, p := range possibilities[1:] {
+			if normalise(p) != first {
+				continue knowledgeLoop
+			}
+		}
+		possibleValues.Add(knowledge)
+	}
+	return Statement[P]{
+		valuation:     a.puzzle.knowledge[a.knowledge.id],
+		allowedValues: possibleValues,
+	}
+}
+
+type possibilityWithKnowledge[P comparable] struct {
+	possibility P
+	knowledge   int
+}
+
+// Knowing normalise(s) is insufficient to determine s for all possibilities
+func (a *Actor[P]) IsInsufficient(normalise func(P) P) Condition[P] {
+	normalCount := make(map[possibilityWithKnowledge[P]]int)
+	for k, possibilities := range a.puzzle.possibilitiesByKnowledge[a.knowledge.id] {
+		for _, p := range possibilities {
+			normalCount[possibilityWithKnowledge[P]{normalise(p), k}]++
+		}
+	}
+	return func(p P) bool {
+		return normalCount[possibilityWithKnowledge[P]{
+			possibility: normalise(p),
+			knowledge:   a.puzzle.knowledge[a.knowledge.id](p),
+		}] > 1
+	}
+}
+
 // Narrate is the narrator's equivalent of Character.Says(). It restricts the
 // solution space without informing any characters. Note that this will cause
 // the puzzle's internalPossibilities and externalPossibilities to differ.
@@ -160,7 +206,9 @@ func (a *Actor[P]) Says(s Statement[P]) {
 		}
 		for value, possibilities := range possibilitiesByValue {
 			s.filterInPlace(&possibilities)
-			newPossibilitiesByKnowledge[id][value] = possibilities
+			if len(possibilities) > 0 {
+				newPossibilitiesByKnowledge[id][value] = possibilities
+			}
 		}
 	}
 	a.puzzle.possibilitiesByKnowledge = newPossibilitiesByKnowledge
