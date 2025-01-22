@@ -11,15 +11,15 @@ import (
 type Puzzle[P comparable] struct {
 	solutionSpace            []P
 	actors                   []*Actor[P]
-	knowledge                []Valuation[P]
-	possibilitiesByKnowledge []map[int][]P
+	possibilitiesByKnowledge map[Knowledge[P]]map[int][]P
 	externalPossibilities    []P
 }
 
 func NewPuzzle[P comparable](possibilities []P) *Puzzle[P] {
 	return &Puzzle[P]{
-		solutionSpace:         possibilities,
-		externalPossibilities: slices.Clone(possibilities),
+		solutionSpace:            possibilities,
+		externalPossibilities:    slices.Clone(possibilities),
+		possibilitiesByKnowledge: make(map[Knowledge[P]]map[int][]P),
 	}
 }
 
@@ -40,32 +40,23 @@ func (p *Puzzle[P]) NewActor() *Actor[P] {
 	return a
 }
 
-func (p *Puzzle[P]) NewKnowledge(v Valuation[P]) Knowledge {
-	k := Knowledge{
-		id: len(p.knowledge),
-	}
-	p.knowledge = append(p.knowledge, v)
-	p.possibilitiesByKnowledge = append(p.possibilitiesByKnowledge, nil)
-	p.initialiseKnowledge(k.id)
-	return k
+func (p *Puzzle[P]) NewKnowledge(v Valuation[P]) Knowledge[P] {
+	p.initialiseKnowledge(&v)
+	return &v
 }
 
-func (p *Puzzle[P]) initialiseKnowledge(id int) {
-	p.possibilitiesByKnowledge[id] = make(map[int][]P)
+func (p *Puzzle[P]) initialiseKnowledge(k Knowledge[P]) {
+	p.possibilitiesByKnowledge[k] = make(map[int][]P)
 	for _, poss := range p.solutionSpace {
-		val := p.knowledge[id](poss)
-		p.possibilitiesByKnowledge[id][val] = append(p.possibilitiesByKnowledge[id][val], poss)
+		val := (*k)(poss)
+		p.possibilitiesByKnowledge[k][val] = append(p.possibilitiesByKnowledge[k][val], poss)
 	}
 }
 
 func (p *Puzzle[P]) NewActorWithKnowledge(v Valuation[P]) *Actor[P] {
 	k := p.NewKnowledge(v)
-	a := &Actor[P]{
-		Id:        len(p.actors),
-		knowledge: k,
-		puzzle:    p,
-	}
-	p.actors = append(p.actors, a)
+	a := p.NewActor()
+	a.knowledge = k
 	return a
 }
 
@@ -84,28 +75,25 @@ func (p *Puzzle[P]) NormalisedPossibilities(normalise func(P) P) []P {
 func (p *Puzzle[P]) Reset() {
 	p.externalPossibilities = slices.Clone(p.solutionSpace)
 	copy(p.externalPossibilities, p.solutionSpace)
-	for i := range p.knowledge {
-		p.initialiseKnowledge(i)
+	for k := range p.possibilitiesByKnowledge {
+		p.initialiseKnowledge(k)
 	}
 }
 
-// Knowledge is a reference to a valuation in a specific puzzle's knowledge and possibilitiesByKnowledge lists
-type Knowledge struct {
-	id int
-}
+type Knowledge[P comparable] *Valuation[P]
 
 type Actor[P comparable] struct {
 	Id        int
 	puzzle    *Puzzle[P]
-	knowledge Knowledge
+	knowledge Knowledge[P]
 }
 
-func (a *Actor[P]) HasKnowledge(k Knowledge) {
+func (a *Actor[P]) HasKnowledge(k Knowledge[P]) {
 	a.knowledge = k
 }
 
 func (a *Actor[P]) PossibilitiesByKnowledge() map[int][]P {
-	return a.puzzle.possibilitiesByKnowledge[a.knowledge.id]
+	return a.puzzle.possibilitiesByKnowledge[a.knowledge]
 }
 
 func SprintPossibilities[P comparable](ps []P) string {

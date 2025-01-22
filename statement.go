@@ -60,13 +60,13 @@ func (p *Puzzle[P]) ValuationEquals(v Valuation[P], value int) Statement[P] {
 
 func (a *Actor[P]) KnowsAnswer() Statement[P] {
 	possibleValues := set.New[int]()
-	for knowledge, possiblities := range a.puzzle.possibilitiesByKnowledge[a.knowledge.id] {
+	for knowledgeValue, possiblities := range a.puzzle.possibilitiesByKnowledge[a.knowledge] {
 		if len(possiblities) == 1 {
-			possibleValues.Add(knowledge)
+			possibleValues.Add(knowledgeValue)
 		}
 	}
 	return Statement[P]{
-		valuation:     a.puzzle.knowledge[a.knowledge.id],
+		valuation:     *a.knowledge,
 		allowedValues: possibleValues,
 	}
 }
@@ -78,7 +78,7 @@ func (a *Actor[P]) DoesNotKnowAnswer() Statement[P] {
 func (a *Actor[P]) KnowsNormalisedAnswer(normalise func(P) P) Statement[P] {
 	possibleValues := set.New[int]()
 knowledgeLoop:
-	for knowledge, possibilities := range a.puzzle.possibilitiesByKnowledge[a.knowledge.id] {
+	for knowledge, possibilities := range a.puzzle.possibilitiesByKnowledge[a.knowledge] {
 		if len(possibilities) == 0 {
 			continue
 		}
@@ -95,7 +95,7 @@ knowledgeLoop:
 		possibleValues.Add(knowledge)
 	}
 	return Statement[P]{
-		valuation:     a.puzzle.knowledge[a.knowledge.id],
+		valuation:     *a.knowledge,
 		allowedValues: possibleValues,
 	}
 }
@@ -108,7 +108,7 @@ type possibilityWithKnowledge[P comparable] struct {
 // Knowing normalise(s) is insufficient to determine s for all possibilities
 func (a *Actor[P]) IsInsufficient(normalise func(P) P) Condition[P] {
 	normalCount := make(map[possibilityWithKnowledge[P]]int)
-	for k, possibilities := range a.puzzle.possibilitiesByKnowledge[a.knowledge.id] {
+	for k, possibilities := range a.puzzle.possibilitiesByKnowledge[a.knowledge] {
 		for _, p := range possibilities {
 			normalCount[possibilityWithKnowledge[P]{normalise(p), k}]++
 		}
@@ -116,7 +116,7 @@ func (a *Actor[P]) IsInsufficient(normalise func(P) P) Condition[P] {
 	return func(p P) bool {
 		return normalCount[possibilityWithKnowledge[P]{
 			possibility: normalise(p),
-			knowledge:   a.puzzle.knowledge[a.knowledge.id](p),
+			knowledge:   (*a.knowledge)(p),
 		}] > 1
 	}
 }
@@ -130,9 +130,8 @@ func (p *Puzzle[P]) Narrate(s Statement[P]) {
 
 func (a *Actor[P]) knows(eval func(P) bool) Statement[P] {
 	allowedValues := set.New[int]()
-	v := a.puzzle.knowledge[a.knowledge.id]
 knowledgeLoop:
-	for knowledge, possibilities := range a.puzzle.possibilitiesByKnowledge[a.knowledge.id] {
+	for knowledge, possibilities := range a.puzzle.possibilitiesByKnowledge[a.knowledge] {
 		if len(possibilities) == 0 {
 			continue
 		}
@@ -144,7 +143,7 @@ knowledgeLoop:
 		allowedValues.Add(knowledge)
 	}
 	return Statement[P]{
-		valuation:     v,
+		valuation:     *a.knowledge,
 		allowedValues: allowedValues,
 	}
 }
@@ -159,9 +158,8 @@ func (a *Actor[P]) KnowsHolds(c Condition[P]) Statement[P] {
 
 func (a *Actor[P]) knowsWhether(eval func(P) bool) Statement[P] {
 	allowedValues := set.New[int]()
-	v := a.puzzle.knowledge[a.knowledge.id]
 knowledgeLoop:
-	for knowledge, possibilities := range a.puzzle.possibilitiesByKnowledge[a.knowledge.id] {
+	for knowledge, possibilities := range a.puzzle.possibilitiesByKnowledge[a.knowledge] {
 		if len(possibilities) == 0 {
 			continue
 		}
@@ -178,7 +176,7 @@ knowledgeLoop:
 		allowedValues.Add(knowledge)
 	}
 	return Statement[P]{
-		valuation:     v,
+		valuation:     *a.knowledge,
 		allowedValues: allowedValues,
 	}
 }
@@ -193,13 +191,13 @@ func (a *Actor[P]) KnowsWhetherHolds(c Condition[P]) Statement[P] {
 
 func (a *Actor[P]) Says(s Statement[P]) {
 	s.filterInPlace(&a.puzzle.externalPossibilities)
-	newPossibilitiesByKnowledge := make([]map[int][]P, len(a.puzzle.possibilitiesByKnowledge))
-	for id, possibilitiesByValue := range a.puzzle.possibilitiesByKnowledge {
-		newPossibilitiesByKnowledge[id] = make(map[int][]P, len(possibilitiesByValue))
-		if id == a.knowledge.id {
+	newPossibilitiesByKnowledge := make(map[Knowledge[P]]map[int][]P, len(a.puzzle.possibilitiesByKnowledge))
+	for k, possibilitiesByValue := range a.puzzle.possibilitiesByKnowledge {
+		newPossibilitiesByKnowledge[k] = make(map[int][]P, len(possibilitiesByValue))
+		if k == a.knowledge {
 			for value, possibilities := range possibilitiesByValue {
 				if s.allowedValues.Contains(value) != s.invert {
-					newPossibilitiesByKnowledge[id][value] = possibilities
+					newPossibilitiesByKnowledge[k][value] = possibilities
 				}
 			}
 			continue
@@ -207,7 +205,7 @@ func (a *Actor[P]) Says(s Statement[P]) {
 		for value, possibilities := range possibilitiesByValue {
 			s.filterInPlace(&possibilities)
 			if len(possibilities) > 0 {
-				newPossibilitiesByKnowledge[id][value] = possibilities
+				newPossibilitiesByKnowledge[k][value] = possibilities
 			}
 		}
 	}
