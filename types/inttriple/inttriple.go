@@ -3,6 +3,8 @@ package inttriple
 import (
 	"fmt"
 	"sort"
+
+	puzzles "github.com/laurencevs/logic-puzzles"
 )
 
 type IntTriple struct {
@@ -79,7 +81,7 @@ func SumOfPairwiseProducts(t IntTriple) int {
 
 // Some IntTriple Conditions
 
-func HasNumberIn(s map[int]struct{}) func(IntTriple) bool {
+func HasNumberIn(s map[int]struct{}) puzzles.Condition[IntTriple] {
 	return func(t IntTriple) bool {
 		_, ok1 := s[t.A]
 		_, ok2 := s[t.B]
@@ -88,7 +90,7 @@ func HasNumberIn(s map[int]struct{}) func(IntTriple) bool {
 	}
 }
 
-func SumIsDivisibleBy(n int) func(IntTriple) bool {
+func SumIsDivisibleBy(n int) puzzles.Condition[IntTriple] {
 	return func(t IntTriple) bool {
 		return (t.A+t.B+t.C)%n == 0
 	}

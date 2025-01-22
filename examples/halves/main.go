@@ -16,10 +16,10 @@ func main() {
 	A := puzzle.NewActorWithKnowledge(intpair.First)
 	B := puzzle.NewActorWithKnowledge(intpair.Second)
 
-	B.Says(B.KnowsWhetherHolds(SecondIsDoubleFirst).Not())
-	A.Says(A.KnowsWhetherHolds(FirstIsDoubleSecond).Not())
-	B.Says(B.KnowsWhetherHolds(FirstIsDoubleSecond).Not())
-	A.Says(A.KnowsWhetherHolds(SecondIsDoubleFirst).Not())
+	B.Says(B.KnowsWhether(SecondIsDoubleFirst).Not())
+	A.Says(A.KnowsWhether(FirstIsDoubleSecond).Not())
+	B.Says(B.KnowsWhether(FirstIsDoubleSecond).Not())
+	A.Says(A.KnowsWhether(SecondIsDoubleFirst).Not())
 
 	fmt.Println("B knows A's number:", puzzle.Evaluate(B.KnowsAnswer()))
 	for _, poss := range B.PossibilitiesByKnowledge() {
@@ -30,10 +30,11 @@ func main() {
 	}
 }
 
-func FirstIsDoubleSecond(p intpair.IntPair) bool {
-	return p.A == p.B*2
-}
-
-func SecondIsDoubleFirst(p intpair.IntPair) bool {
-	return p.B == p.A*2
-}
+var (
+	FirstIsDoubleSecond puzzles.Condition[intpair.IntPair] = func(p intpair.IntPair) bool {
+		return p.A == p.B*2
+	}
+	SecondIsDoubleFirst puzzles.Condition[intpair.IntPair] = func(p intpair.IntPair) bool {
+		return p.B == p.A*2
+	}
+)

@@ -44,9 +44,9 @@ type puzzle2024[P comparable] struct {
 
 func example2024_1(p *puzzle2024[intpair.IntPair]) {
 	p.puzzle.Narrate(p.Paul.DoesNotKnowAnswer())
-	p.Paul.Says(p.Paul.KnowsHolds(intpair.HasNumberDivisibleBy(20)))
+	p.Paul.Says(p.Paul.Knows(intpair.HasNumberDivisibleBy(20)))
 	p.puzzle.Narrate(p.Sophie.DoesNotKnowAnswer())
-	p.Sophie.Says(p.Sophie.KnowsHolds(intpair.HasNumberDivisibleBy(24)))
+	p.Sophie.Says(p.Sophie.Knows(intpair.HasNumberDivisibleBy(24)))
 	p.Dave.Says(p.Dave.DoesNotKnowAnswer())
 
 	fmt.Println(puzzles.SprintPossibilities(p.puzzle.ExternalPossibilities())) // (256, 480)
@@ -55,9 +55,9 @@ func example2024_1(p *puzzle2024[intpair.IntPair]) {
 
 func example2024_2(p *puzzle2024[intpair.IntPair]) {
 	p.Paul.Says(p.Paul.DoesNotKnowAnswer())
-	p.Paul.Says(p.Paul.KnowsHolds(intpair.ProductIsDivisibleBy(20)))
+	p.Paul.Says(p.Paul.Knows(intpair.ProductIsDivisibleBy(20)))
 	p.Sophie.Says(p.Sophie.DoesNotKnowAnswer())
-	p.Sophie.Says(p.Sophie.KnowsHolds(intpair.SumIsDivisibleBy(24)))
+	p.Sophie.Says(p.Sophie.Knows(intpair.SumIsDivisibleBy(24)))
 	p.Dave.Says(p.Dave.Knows(p.Paul.KnowsAnswer()))
 
 	fmt.Println(puzzles.SprintPossibilities(p.puzzle.ExternalPossibilities())) // (10, 1982)
@@ -65,8 +65,8 @@ func example2024_2(p *puzzle2024[intpair.IntPair]) {
 }
 
 func example2024_3(p *puzzle2024[intpair.IntPair]) {
-	p.Paul.Says(p.Paul.KnowsHolds(intpair.ProductIsDivisibleBy(20)))
-	p.Sophie.Says(p.Sophie.KnowsHolds(intpair.SumIsDivisibleBy(24)))
+	p.Paul.Says(p.Paul.Knows(intpair.ProductIsDivisibleBy(20)))
+	p.Sophie.Says(p.Sophie.Knows(intpair.SumIsDivisibleBy(24)))
 	p.Dave.Says(p.Dave.Knows(p.Paul.KnowsAnswer()))
 
 	fmt.Println(puzzles.SprintPossibilities(p.puzzle.ExternalPossibilities())) // (10, 1982)
@@ -74,9 +74,9 @@ func example2024_3(p *puzzle2024[intpair.IntPair]) {
 }
 
 func example2024_4(p *puzzle2024[intpair.IntPair]) {
-	p.Paul.Says(p.Paul.KnowsHolds(intpair.ProductIsDivisibleBy(20)))
+	p.Paul.Says(p.Paul.Knows(intpair.ProductIsDivisibleBy(20)))
 	p.Paul.Says(p.Paul.KnowsAnswer())
-	p.Sophie.Says(p.Sophie.KnowsHolds(intpair.SumIsDivisibleBy(24)))
+	p.Sophie.Says(p.Sophie.Knows(intpair.SumIsDivisibleBy(24)))
 	p.Paul.Says(p.Paul.Knows(p.Sophie.KnowsAnswer()))
 
 	fmt.Println(puzzles.SprintPossibilities(p.puzzle.ExternalPossibilities())) // (1046, 1090)
@@ -98,9 +98,9 @@ func example2024_5(p *puzzle2024[intpair.IntPair]) {
 
 		What are the numbers?
 	*/
-	p.Paul.Says(p.Paul.KnowsHolds(intpair.ProductIsDivisibleBy(20)))
+	p.Paul.Says(p.Paul.Knows(intpair.ProductIsDivisibleBy(20)))
 	p.Dave.Says(p.Dave.Knows(p.Sophie.Knows(p.Paul.DoesNotKnowAnswer())))
-	p.Sophie.Says(p.Sophie.KnowsHolds(intpair.SumIsDivisibleBy(24)))
+	p.Sophie.Says(p.Sophie.Knows(intpair.SumIsDivisibleBy(24)))
 	p.Paul.Says(p.Paul.Knows(p.Sophie.Knows(p.Dave.KnowsAnswer())))
 
 	fmt.Println(puzzles.SprintPossibilities(p.puzzle.ExternalPossibilities())) // (20, 2020)
@@ -119,19 +119,19 @@ func example2024_6(p *puzzle2024[intpair.IntPair]) {
 		  numbers is divisible by 24"
 		What are the two numbers?
 	*/
-	p.Paul.Says(p.Paul.KnowsHolds(intpair.ProductIsDivisibleBy(20)))
+	p.Paul.Says(p.Paul.Knows(intpair.ProductIsDivisibleBy(20)))
 	p.Dave.Says(p.Dave.Knows(p.Paul.Knows(p.Sophie.DoesNotKnowAnswer())))
 	p.Sophie.Says(p.Sophie.KnowsAnswer())
-	p.Sophie.Says(p.Sophie.KnowsHolds(intpair.SumIsDivisibleBy(24)))
+	p.Sophie.Says(p.Sophie.Knows(intpair.SumIsDivisibleBy(24)))
 
 	fmt.Println(puzzles.SprintPossibilities(p.puzzle.ExternalPossibilities())) // (2010, 2022)
 	p.puzzle.Reset()
 }
 
 func example2024_7(p *puzzle2024[intpair.IntPair]) {
-	p.Paul.Says(p.Paul.KnowsHolds(intpair.ProductIsDivisibleBy(20)))
+	p.Paul.Says(p.Paul.Knows(intpair.ProductIsDivisibleBy(20)))
 	p.Sophie.Says(p.Sophie.Knows(p.Paul.Knows(p.Dave.DoesNotKnowAnswer())))
-	p.Sophie.Says(p.Sophie.KnowsHolds(intpair.SumIsDivisibleBy(24)))
+	p.Sophie.Says(p.Sophie.Knows(intpair.SumIsDivisibleBy(24)))
 	p.Paul.Says(p.Paul.Knows(p.Dave.KnowsAnswer()))
 
 	fmt.Println(puzzles.SprintPossibilities(p.puzzle.ExternalPossibilities())) // (10, 1982)

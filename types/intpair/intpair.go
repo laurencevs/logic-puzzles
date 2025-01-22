@@ -1,6 +1,10 @@
 package intpair
 
-import "fmt"
+import (
+	"fmt"
+
+	puzzles "github.com/laurencevs/logic-puzzles"
+)
 
 type IntPair struct {
 	A, B int
@@ -67,13 +71,13 @@ func AbsDifference(p IntPair) int {
 
 // Some IntPair Conditions
 
-func HasNumberDivisibleBy(n int) func(IntPair) bool {
+func HasNumberDivisibleBy(n int) puzzles.Condition[IntPair] {
 	return func(p IntPair) bool {
 		return p.A%n == 0 || p.B%n == 0
 	}
 }
 
-func HasNumberIn(s map[int]struct{}) func(IntPair) bool {
+func HasNumberIn(s map[int]struct{}) puzzles.Condition[IntPair] {
 	return func(p IntPair) bool {
 		_, ok1 := s[p.A]
 		_, ok2 := s[p.B]
@@ -81,7 +85,7 @@ func HasNumberIn(s map[int]struct{}) func(IntPair) bool {
 	}
 }
 
-func HasOneNumberIn(s map[int]struct{}) func(IntPair) bool {
+func HasOneNumberIn(s map[int]struct{}) puzzles.Condition[IntPair] {
 	return func(p IntPair) bool {
 		_, ok1 := s[p.A]
 		_, ok2 := s[p.B]
@@ -89,25 +93,25 @@ func HasOneNumberIn(s map[int]struct{}) func(IntPair) bool {
 	}
 }
 
-func ProductIsDivisibleBy(n int) func(IntPair) bool {
+func ProductIsDivisibleBy(n int) puzzles.Condition[IntPair] {
 	return func(p IntPair) bool {
 		return (p.A*p.B)%n == 0
 	}
 }
 
-func ProductIsNotDivisibleBy(n int) func(IntPair) bool {
+func ProductIsNotDivisibleBy(n int) puzzles.Condition[IntPair] {
 	return func(p IntPair) bool {
 		return (p.A*p.B)%n != 0
 	}
 }
 
-func SumIsDivisibleBy(n int) func(IntPair) bool {
+func SumIsDivisibleBy(n int) puzzles.Condition[IntPair] {
 	return func(p IntPair) bool {
 		return (p.A+p.B)%n == 0
 	}
 }
 
-func AbsDifferenceIsDivisibleBy(n int) func(IntPair) bool {
+func AbsDifferenceIsDivisibleBy(n int) puzzles.Condition[IntPair] {
 	return func(p IntPair) bool {
 		return (p.A-p.B)%n == 0
 	}

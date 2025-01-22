@@ -7,28 +7,42 @@ import (
 type Valuation[T any] func(T) int
 type Condition[T any] func(T) bool
 
-type Statement[P comparable] struct {
+type Statement[P comparable] interface {
+	ConsistentWith(p P) bool
+}
+
+type ValuationStatement[P comparable] struct {
 	valuation     Valuation[P]
 	allowedValues set.Set[int]
 	invert        bool
 }
 
-func (s Statement[P]) Not() Statement[P] {
-	return Statement[P]{
+func (s ValuationStatement[P]) ConsistentWith(p P) bool {
+	return s.allowedValues.Contains(s.valuation(p)) != s.invert
+}
+
+func (s ValuationStatement[P]) Not() ValuationStatement[P] {
+	return ValuationStatement[P]{
 		valuation:     s.valuation,
 		allowedValues: s.allowedValues,
 		invert:        !s.invert,
 	}
 }
 
-func (s Statement[P]) evaluate(p P) bool {
-	return s.allowedValues.Contains(s.valuation(p)) != s.invert
+func (c Condition[P]) ConsistentWith(p P) bool {
+	return c(p)
 }
 
-func (s Statement[P]) filterInPlace(l *[]P) {
+func (c Condition[P]) Not() Condition[P] {
+	return Condition[P](func(p P) bool {
+		return !c(p)
+	})
+}
+
+func filterInPlace[P comparable](s Statement[P], l *[]P) {
 	i := 0
 	for _, p := range *l {
-		if s.evaluate(p) {
+		if s.ConsistentWith(p) {
 			(*l)[i] = p
 			i++
 		}
@@ -36,46 +50,40 @@ func (s Statement[P]) filterInPlace(l *[]P) {
 	*l = (*l)[:i]
 }
 
-func (c Condition[P]) Not() Condition[P] {
-	return func(p P) bool {
-		return !c(p)
-	}
-}
-
 func (p *Puzzle[P]) Evaluate(s Statement[P]) bool {
 	for _, poss := range p.externalPossibilities {
-		if !s.evaluate(poss) {
+		if !s.ConsistentWith(poss) {
 			return false
 		}
 	}
 	return true
 }
 
-func (p *Puzzle[P]) ValuationEquals(v Valuation[P], value int) Statement[P] {
-	return Statement[P]{
+func (p *Puzzle[P]) ValuationEquals(v Valuation[P], value int) ValuationStatement[P] {
+	return ValuationStatement[P]{
 		valuation:     v,
 		allowedValues: set.New(value),
 	}
 }
 
-func (a *Actor[P]) KnowsAnswer() Statement[P] {
+func (a *Actor[P]) KnowsAnswer() ValuationStatement[P] {
 	possibleValues := set.New[int]()
 	for knowledgeValue, possiblities := range a.puzzle.possibilitiesByKnowledge[a.knowledge] {
 		if len(possiblities) == 1 {
 			possibleValues.Add(knowledgeValue)
 		}
 	}
-	return Statement[P]{
+	return ValuationStatement[P]{
 		valuation:     *a.knowledge,
 		allowedValues: possibleValues,
 	}
 }
 
-func (a *Actor[P]) DoesNotKnowAnswer() Statement[P] {
+func (a *Actor[P]) DoesNotKnowAnswer() ValuationStatement[P] {
 	return a.KnowsAnswer().Not()
 }
 
-func (a *Actor[P]) KnowsNormalisedAnswer(normalise func(P) P) Statement[P] {
+func (a *Actor[P]) KnowsNormalisedAnswer(normalise func(P) P) ValuationStatement[P] {
 	possibleValues := set.New[int]()
 knowledgeLoop:
 	for knowledge, possibilities := range a.puzzle.possibilitiesByKnowledge[a.knowledge] {
@@ -94,7 +102,7 @@ knowledgeLoop:
 		}
 		possibleValues.Add(knowledge)
 	}
-	return Statement[P]{
+	return ValuationStatement[P]{
 		valuation:     *a.knowledge,
 		allowedValues: possibleValues,
 	}
@@ -125,10 +133,10 @@ func (a *Actor[P]) IsInsufficient(normalise func(P) P) Condition[P] {
 // solution space without informing any characters. Note that this will cause
 // the puzzle's internalPossibilities and externalPossibilities to differ.
 func (p *Puzzle[P]) Narrate(s Statement[P]) {
-	s.filterInPlace(&p.externalPossibilities)
+	filterInPlace(s, &p.externalPossibilities)
 }
 
-func (a *Actor[P]) knows(eval func(P) bool) Statement[P] {
+func (a *Actor[P]) Knows(s Statement[P]) ValuationStatement[P] {
 	allowedValues := set.New[int]()
 knowledgeLoop:
 	for knowledge, possibilities := range a.puzzle.possibilitiesByKnowledge[a.knowledge] {
@@ -136,27 +144,19 @@ knowledgeLoop:
 			continue
 		}
 		for _, p := range possibilities {
-			if !eval(p) {
+			if !s.ConsistentWith(p) {
 				continue knowledgeLoop
 			}
 		}
 		allowedValues.Add(knowledge)
 	}
-	return Statement[P]{
+	return ValuationStatement[P]{
 		valuation:     *a.knowledge,
 		allowedValues: allowedValues,
 	}
 }
 
-func (a *Actor[P]) Knows(s Statement[P]) Statement[P] {
-	return a.knows(s.evaluate)
-}
-
-func (a *Actor[P]) KnowsHolds(c Condition[P]) Statement[P] {
-	return a.knows(c)
-}
-
-func (a *Actor[P]) knowsWhether(eval func(P) bool) Statement[P] {
+func (a *Actor[P]) KnowsWhether(s Statement[P]) ValuationStatement[P] {
 	allowedValues := set.New[int]()
 knowledgeLoop:
 	for knowledge, possibilities := range a.puzzle.possibilitiesByKnowledge[a.knowledge] {
@@ -167,43 +167,35 @@ knowledgeLoop:
 			allowedValues.Add(knowledge)
 			continue
 		}
-		truthValue := eval(possibilities[0])
+		truthValue := s.ConsistentWith(possibilities[0])
 		for _, p := range possibilities[1:] {
-			if eval(p) != truthValue {
+			if s.ConsistentWith(p) != truthValue {
 				continue knowledgeLoop
 			}
 		}
 		allowedValues.Add(knowledge)
 	}
-	return Statement[P]{
+	return ValuationStatement[P]{
 		valuation:     *a.knowledge,
 		allowedValues: allowedValues,
 	}
 }
 
-func (a *Actor[P]) KnowsWhether(s Statement[P]) Statement[P] {
-	return a.knowsWhether(s.evaluate)
-}
-
-func (a *Actor[P]) KnowsWhetherHolds(c Condition[P]) Statement[P] {
-	return a.knowsWhether(c)
-}
-
-func (a *Actor[P]) Says(s Statement[P]) {
-	s.filterInPlace(&a.puzzle.externalPossibilities)
+func (a *Actor[P]) Says(s ValuationStatement[P]) {
+	filterInPlace(Statement[P](s), &a.puzzle.externalPossibilities)
 	newPossibilitiesByKnowledge := make(map[Knowledge[P]]map[int][]P, len(a.puzzle.possibilitiesByKnowledge))
 	for k, possibilitiesByValue := range a.puzzle.possibilitiesByKnowledge {
 		newPossibilitiesByKnowledge[k] = make(map[int][]P, len(possibilitiesByValue))
 		if k == a.knowledge {
 			for value, possibilities := range possibilitiesByValue {
-				if s.allowedValues.Contains(value) != s.invert {
+				if s.ConsistentWith(possibilities[0]) {
 					newPossibilitiesByKnowledge[k][value] = possibilities
 				}
 			}
 			continue
 		}
 		for value, possibilities := range possibilitiesByValue {
-			s.filterInPlace(&possibilities)
+			filterInPlace(Statement[P](s), &possibilities)
 			if len(possibilities) > 0 {
 				newPossibilitiesByKnowledge[k][value] = possibilities
 			}

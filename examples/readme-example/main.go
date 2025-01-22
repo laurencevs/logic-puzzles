@@ -15,9 +15,9 @@ func main() {
 	Pastitsio := puzzle.NewActorWithKnowledge(intpair.Product)
 	Dolmadakia := puzzle.NewActorWithKnowledge(intpair.AbsDifference)
 
-	Pastitsio.Says(Pastitsio.KnowsHolds(intpair.ProductIsDivisibleBy(20)))
+	Pastitsio.Says(Pastitsio.Knows(intpair.ProductIsDivisibleBy(20)))
 	Stifado.Says(Stifado.Knows(Pastitsio.Knows(Dolmadakia.DoesNotKnowAnswer())))
-	Stifado.Says(Stifado.KnowsHolds(intpair.SumIsDivisibleBy(24)))
+	Stifado.Says(Stifado.Knows(intpair.SumIsDivisibleBy(24)))
 	Pastitsio.Says(Pastitsio.Knows(Dolmadakia.KnowsAnswer()))
 
 	fmt.Println(puzzles.SprintPossibilities(puzzle.ExternalPossibilities()))

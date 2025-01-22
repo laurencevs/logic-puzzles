@@ -45,7 +45,7 @@ func puzzle1() {
 
 	Dolmadakia.Says(Dolmadakia.Knows(Stifado.DoesNotKnowAnswer()))
 	Stifado.Says(Stifado.Knows(Pastitsio.DoesNotKnowAnswer()))
-	Pastitsio.Says(Pastitsio.KnowsHolds(intpair.HasNumberIn(sideLengths2025))) // HasOneNumberIn also works
+	Pastitsio.Says(Pastitsio.Knows(intpair.HasNumberIn(sideLengths2025))) // HasOneNumberIn also works
 	Stifado.Says(Stifado.KnowsAnswer())
 
 	puzzle.Narrate(Pastitsio.DoesNotKnowAnswer())
@@ -86,9 +86,9 @@ func puzzle2() {
 
 	Stifado.Says(Stifado.Knows(Pastitsio.KnowsNormalisedAnswer(inttriple.Normalise).Not()))
 	Pastitsio.Says(Pastitsio.Knows(Dolmadakia.KnowsNormalisedAnswer(inttriple.Normalise).Not()))
-	Dolmadakia.Says(Dolmadakia.KnowsHolds(inttriple.HasNumberIn(sideLengths2025)))
+	Dolmadakia.Says(Dolmadakia.Knows(inttriple.HasNumberIn(sideLengths2025)))
 	Stifado.Says(Stifado.KnowsNormalisedAnswer(inttriple.Normalise).Not())
-	Pastitsio.Says(Pastitsio.KnowsHolds(Stifado.IsInsufficient(inttriple.Normalise)))
+	Pastitsio.Says(Pastitsio.Knows(Stifado.IsInsufficient(inttriple.Normalise)))
 
 	fmt.Println(puzzles.SprintPossibilities(puzzle.NormalisedPossibilities(inttriple.Normalise)))
 }
