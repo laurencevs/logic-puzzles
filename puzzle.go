@@ -3,16 +3,30 @@ package puzzles
 import (
 	"fmt"
 	"slices"
-	"strings"
 
 	"github.com/laurencevs/logic-puzzles/internal/set"
 )
 
+type Valuation[P any] func(P) int
+
+// Knowledge represents the information an Actor is given about the solution
+// before any statements are made.
+type Knowledge[P any] *Valuation[P]
+
 type Puzzle[P comparable] struct {
-	solutionSpace            []P
-	actors                   []*Actor[P]
+	// solutionSpace is the initial set of possible solutions to the Puzzle.
+	solutionSpace []P
+	// actors are the characters in the Puzzle.
+	actors []*Actor[P]
+	// possibilitiesByKnowledge represents the set of remaining possible
+	// solutions, conditional on the value of a given piece of Knowledge.
+	// One can reason about what solutions an Actor considers possible by
+	// considering the possibilitiesByKnowledge values for their Knowledge.
 	possibilitiesByKnowledge map[Knowledge[P]]map[int][]P
-	externalPossibilities    []P
+	// externalPossibilities represents the set of remaining possibilities
+	// from the perspective of an outside observer who is not privy to any
+	// specific Knowledge.
+	externalPossibilities []P
 }
 
 func NewPuzzle[P comparable](possibilities []P) *Puzzle[P] {
@@ -64,14 +78,7 @@ func (p *Puzzle[P]) ExternalPossibilities() []P {
 	return p.externalPossibilities
 }
 
-func (p *Puzzle[P]) NormalisedPossibilities(normalise func(P) P) []P {
-	s := set.New[P]()
-	for _, p := range p.externalPossibilities {
-		s.Add(normalise(p))
-	}
-	return s.Values()
-}
-
+// Reset resets the Puzzle to its initial state.
 func (p *Puzzle[P]) Reset() {
 	p.externalPossibilities = slices.Clone(p.solutionSpace)
 	copy(p.externalPossibilities, p.solutionSpace)
@@ -80,14 +87,16 @@ func (p *Puzzle[P]) Reset() {
 	}
 }
 
-type Knowledge[P comparable] *Valuation[P]
-
 type Actor[P comparable] struct {
 	Id        int
 	puzzle    *Puzzle[P]
 	knowledge Knowledge[P]
 }
 
+// HasKnowledge sets the Actor's Knowledge without initialising the internal
+// Puzzle state for that Knowledge.
+// It should only be used with Knowledge values created using
+// Puzzle.NewKnowledge.
 func (a *Actor[P]) HasKnowledge(k Knowledge[P]) {
 	a.knowledge = k
 }
@@ -96,24 +105,21 @@ func (a *Actor[P]) PossibilitiesByKnowledge() map[int][]P {
 	return a.puzzle.possibilitiesByKnowledge[a.knowledge]
 }
 
-func SprintPossibilities[P comparable](ps []P) string {
-	var b strings.Builder
-	pss := "possibilities"
-	if len(ps) == 1 {
-		pss = "possibility"
+func NormalisePossibilities[P comparable](ps []P, normalise func(P) P) []P {
+	s := set.New[P]()
+	for _, p := range ps {
+		s.Add(normalise(p))
 	}
-	b.WriteString(fmt.Sprintf("Puzzle has %d remaining %s", len(ps), pss))
-	if len(ps) == 0 {
-		return b.String()
+	return s.Values()
+}
+
+func SprintPossibilities[P any](ps []P) string {
+	switch len(ps) {
+	case 0:
+		return "no remaining possibilities"
+	case 1:
+		return fmt.Sprintf("1 remaining possibility: %v", ps[0])
+	default:
+		return fmt.Sprintf("%d remaining possibilities", len(ps))
 	}
-	b.WriteString(": ")
-	b.WriteString(fmt.Sprint(ps[0]))
-	for i, p := range ps[1:] {
-		b.WriteString(", ")
-		if i == 49 {
-			b.WriteString("...")
-		}
-		b.WriteString(fmt.Sprint(p))
-	}
-	return b.String()
 }

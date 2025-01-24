@@ -90,7 +90,7 @@ func puzzle2() {
 	Stifado.Says(Stifado.KnowsNormalisedAnswer(inttriple.Normalise).Not())
 	Pastitsio.Says(Pastitsio.Knows(Stifado.IsInsufficient(inttriple.Normalise)))
 
-	fmt.Println(puzzles.SprintPossibilities(puzzle.NormalisedPossibilities(inttriple.Normalise)))
+	fmt.Println(puzzles.SprintPossibilities(puzzles.NormalisePossibilities(puzzle.ExternalPossibilities(), inttriple.Normalise)))
 }
 
 var sideLengths2025 = set.New(
