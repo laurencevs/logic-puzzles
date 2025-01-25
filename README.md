@@ -36,7 +36,7 @@ fmt.Println(puzzles.SprintPossibilities(puzzle.ExternalPossibilities()))
 
 ```
 $ go run ./examples/readme-example
-Puzzle has 1 remaining possibility: (10, 1982)
+1 remaining possibility: (10, 1982)
 ```
 
 ### Puzzle specification

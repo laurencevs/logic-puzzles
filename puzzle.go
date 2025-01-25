@@ -7,8 +7,6 @@ import (
 	"github.com/laurencevs/logic-puzzles/internal/set"
 )
 
-type Valuation[P any] func(P) int
-
 // Knowledge represents the information an Actor is given about the solution
 // before any statements are made.
 type Knowledge[P any] *Valuation[P]
