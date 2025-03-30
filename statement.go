@@ -4,9 +4,9 @@ import (
 	"github.com/laurencevs/logic-puzzles/internal/set"
 )
 
-// Statement represents a statement about the solution to a Puzzle.
+// Statement represents a statement about the solution to a puzzle.
 // ConsistentWith should return true for any possibility that the Statement
-// does not rule out.
+// does not directly rule out.
 type Statement[P any] interface {
 	ConsistentWith(p P) bool
 }
@@ -23,8 +23,10 @@ func (c Condition[P]) Not() Condition[P] {
 	})
 }
 
-// ValuationStatement is a Statement whose truth depends only on the value of a
-// particular Valuation. Statements by Actors are always ValuationStatements.
+// ValuationStatement is a statement whose truth depends only on the value of a
+// particular valuation. A statement by an actor is always a
+// ValuationStatement, where the valuation is the same as that pointed to by
+// the actor's knowledge.
 type ValuationStatement[P any] struct {
 	valuation     Valuation[P]
 	allowedValues set.Set[int]
@@ -43,6 +45,8 @@ func (s ValuationStatement[P]) Not() ValuationStatement[P] {
 	}
 }
 
+// Evaluate tests whether the given statement holds for all current
+// possibilities, from an external observer's perspective.
 func (p *Puzzle[P]) Evaluate(s Statement[P]) bool {
 	for _, poss := range p.externalPossibilities {
 		if !s.ConsistentWith(poss) {
@@ -59,6 +63,8 @@ func (p *Puzzle[P]) ValuationEquals(v Valuation[P], value int) ValuationStatemen
 	}
 }
 
+// KnowsAnswer is the statement that the solution has a unique value under the
+// given actor's known valuation, among all remaining possibilities.
 func (a *Actor[P]) KnowsAnswer() ValuationStatement[P] {
 	possibleValues := set.New[int]()
 	for knowledgeValue, possiblities := range a.puzzle.possibilitiesByKnowledge[a.knowledge] {
@@ -106,8 +112,11 @@ type possibilityWithKnowledge[P comparable] struct {
 	knowledge   int
 }
 
-// Knowing normalise(s) is insufficient to determine s for all possibilities
-func (a *Actor[P]) IsInsufficient(normalise func(P) P) Condition[P] {
+// DoesNotKnowAnswerGivenNormalised is the statement that even if the given
+// actor were told the normalised value of the solution, they would not know
+// the solution. That is, the solution has a non-unique normalised value among
+// possibilities consistent with the actor's known valuation.
+func (a *Actor[P]) DoesNotKnowAnswerGivenNormalised(normalise func(P) P) Condition[P] {
 	normalCount := make(map[possibilityWithKnowledge[P]]int)
 	for k, possibilities := range a.puzzle.possibilitiesByKnowledge[a.knowledge] {
 		for _, p := range possibilities {
@@ -136,15 +145,15 @@ func filterInPlace[P any](s Statement[P], l *[]P) {
 // Narrate is the narrator's equivalent of Actor.Says(). It restricts the
 // solution space without 'informing' any characters.
 //
-// Note that this will cause the Puzzle's externalPossibilities and
+// Note that this will cause the puzzle's externalPossibilities and
 // possibilitiesByKnowledge to become inconsistent. Narrate should only be used
-// to reveal the solution to the audience at the end of the Puzzle.
+// to reveal the solution to the audience at the end of the puzzle.
 func (p *Puzzle[P]) Narrate(s Statement[P]) {
 	filterInPlace(s, &p.externalPossibilities)
 }
 
-// a.Knows(s) is equivalent to saying that s evaluates to true for all
-// solutions that a considers possible based on their Knowledge.
+// Knows is the statement that the given statement evaluates to true for all
+// solutions that the given actor considers possible based on their knowledge.
 func (a *Actor[P]) Knows(s Statement[P]) ValuationStatement[P] {
 	allowedValues := set.New[int]()
 outer:
@@ -165,8 +174,9 @@ outer:
 	}
 }
 
-// a.KnowsWhether(s) is equivalent to the statement that s has the same truth
-// value for all solutions that a considers possible based on their Knowledge.
+// KnowsWhether is the statement that the given statement has the same truth
+// value for all solutions that the given actor considers possible based on
+// their knowledge.
 func (a *Actor[P]) KnowsWhether(s Statement[P]) ValuationStatement[P] {
 	allowedValues := set.New[int]()
 knowledgeLoop:
@@ -192,9 +202,9 @@ knowledgeLoop:
 	}
 }
 
-// Says makes the truth of Statement s 'common knowledge' within the Puzzle. It
-// does not account for the information implied by the fact that a knows s; for
-// this, it should be combined with a.Knows(s).
+// Says makes the truth of the given statement s 'common knowledge' within the
+// puzzle. It does not account for the information implied by the fact that
+// the given actor knows s; for this, it should be combined with a.Knows(s).
 func (a *Actor[P]) Says(s Statement[P]) {
 	filterInPlace(s, &a.puzzle.externalPossibilities)
 	newPossibilitiesByKnowledge := make(map[Knowledge[P]]map[int][]P, len(a.puzzle.possibilitiesByKnowledge))

@@ -44,7 +44,7 @@ func IntPairs(min, max int, ordered, withRepetition bool) []IntPair {
 	return pairs
 }
 
-// Some IntPair Valuations
+// Some IntPair valuations
 
 func First(p IntPair) int {
 	return p.A

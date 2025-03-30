@@ -61,7 +61,7 @@ func Normalise(t IntTriple) IntTriple {
 	}
 }
 
-// Some IntTriple Valuations
+// Some IntTriple valuations
 
 func Pair1Product(t IntTriple) int {
 	return t.A * t.B

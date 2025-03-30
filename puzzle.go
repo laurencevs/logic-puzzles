@@ -7,7 +7,7 @@ import (
 	"github.com/laurencevs/logic-puzzles/internal/set"
 )
 
-// Knowledge represents the information an Actor is given about the solution
+// Knowledge represents the information an actor is given about the solution
 // before any statements are made.
 type Knowledge[P any] *Valuation[P]
 
@@ -17,13 +17,13 @@ type Puzzle[P comparable] struct {
 	// actors are the characters in the Puzzle.
 	actors []*Actor[P]
 	// possibilitiesByKnowledge represents the set of remaining possible
-	// solutions, conditional on the value of a given piece of Knowledge.
-	// One can reason about what solutions an Actor considers possible by
-	// considering the possibilitiesByKnowledge values for their Knowledge.
+	// solutions, conditional on the value of a given piece of knowledge.
+	// One can reason about what solutions an actor considers possible by
+	// considering the possibilitiesByKnowledge values for their knowledge.
 	possibilitiesByKnowledge map[Knowledge[P]]map[int][]P
 	// externalPossibilities represents the set of remaining possibilities
 	// from the perspective of an outside observer who is not privy to any
-	// specific Knowledge.
+	// specific knowledge.
 	externalPossibilities []P
 }
 
@@ -76,7 +76,7 @@ func (p *Puzzle[P]) ExternalPossibilities() []P {
 	return p.externalPossibilities
 }
 
-// Reset resets the Puzzle to its initial state.
+// Reset resets the puzzle to its initial state.
 func (p *Puzzle[P]) Reset() {
 	p.externalPossibilities = slices.Clone(p.solutionSpace)
 	copy(p.externalPossibilities, p.solutionSpace)
@@ -91,10 +91,9 @@ type Actor[P comparable] struct {
 	knowledge Knowledge[P]
 }
 
-// HasKnowledge sets the Actor's Knowledge without initialising the internal
-// Puzzle state for that Knowledge.
-// It should only be used with Knowledge values created using
-// Puzzle.NewKnowledge.
+// HasKnowledge sets the actor's knowledge without initialising the internal
+// puzzle state for that knowledge. It should only be used with knowledge
+// values created using Puzzle.NewKnowledge.
 func (a *Actor[P]) HasKnowledge(k Knowledge[P]) {
 	a.knowledge = k
 }
