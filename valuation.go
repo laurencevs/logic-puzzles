@@ -71,49 +71,136 @@ func (s GenericValuationStatement[P, V]) Not() Statement[P] {
 	return s.not()
 }
 
-type PossibilitiesByValuation[P any, V comparable] struct {
+type PossibilitiesByValuation[P comparable, V comparable] struct {
 	f             GenericValuation[P, V]
 	possibilities map[V][]P
 }
 
 var _ IValuation[int] = PossibilitiesByValuation[int, string]{}
 
+func (pv PossibilitiesByValuation[P, V]) knowsAnswer() GenericValuationStatement[P, V] {
+	possibleValues := set.New[V]()
+	for knowledgeValue, possiblities := range pv.possibilities {
+		if len(possiblities) == 1 {
+			possibleValues.Add(knowledgeValue)
+		}
+	}
+	return GenericValuationStatement[P, V]{
+		valuation:     pv.f,
+		allowedValues: possibleValues,
+	}
+}
+
 func (pv PossibilitiesByValuation[P, V]) KnowsAnswer() Statement[P] {
-	// TODO
-	return nil
+	return pv.knowsAnswer()
 }
 
 func (pv PossibilitiesByValuation[P, V]) DoesNotKnowAnswer() Statement[P] {
-	// TODO
-	return nil
+	return pv.knowsAnswer().not()
+}
+
+func (pv PossibilitiesByValuation[P, V]) knows(s Statement[P]) GenericValuationStatement[P, V] {
+	allowedValues := set.New[V]()
+outer:
+	for knowledge, possibilities := range pv.possibilities {
+		if len(possibilities) == 0 {
+			continue
+		}
+		for _, p := range possibilities {
+			if !s.ConsistentWith(p) {
+				continue outer
+			}
+		}
+		allowedValues.Add(knowledge)
+	}
+	return GenericValuationStatement[P, V]{
+		valuation:     pv.f,
+		allowedValues: allowedValues,
+	}
 }
 
 func (pv PossibilitiesByValuation[P, V]) Knows(s Statement[P]) Statement[P] {
-	// TODO
-	return nil
+	return pv.knows(s)
 }
 
 func (pv PossibilitiesByValuation[P, V]) DoesNotKnow(s Statement[P]) Statement[P] {
-	// TODO
-	return nil
+	return pv.knows(s).not()
+}
+
+func (pv PossibilitiesByValuation[P, V]) knowsWhether(s Statement[P]) GenericValuationStatement[P, V] {
+	allowedValues := set.New[V]()
+knowledgeLoop:
+	for knowledge, possibilities := range pv.possibilities {
+		if len(possibilities) == 0 {
+			continue
+		}
+		if len(possibilities) == 1 {
+			allowedValues.Add(knowledge)
+			continue
+		}
+		truthValue := s.ConsistentWith(possibilities[0])
+		for _, p := range possibilities[1:] {
+			if s.ConsistentWith(p) != truthValue {
+				continue knowledgeLoop
+			}
+		}
+		allowedValues.Add(knowledge)
+	}
+	return GenericValuationStatement[P, V]{
+		valuation:     pv.f,
+		allowedValues: allowedValues,
+	}
 }
 
 func (pv PossibilitiesByValuation[P, V]) KnowsWhether(s Statement[P]) Statement[P] {
-	// TODO
-	return nil
+	return pv.knowsWhether(s)
 }
 
 func (pv PossibilitiesByValuation[P, V]) DoesNotKnowWhether(s Statement[P]) Statement[P] {
-	// TODO
-	return nil
+	return pv.knowsWhether(s).not()
 }
 
 func (pv PossibilitiesByValuation[P, V]) KnowsNormalisedAnswer(normalise func(P) P) Statement[P] {
-	// TODO
-	return nil
+	possibleValues := set.New[V]()
+outer:
+	for knowledge, possibilities := range pv.possibilities {
+		if len(possibilities) == 0 {
+			continue
+		}
+		if len(possibilities) == 1 {
+			possibleValues.Add(knowledge)
+			continue
+		}
+		first := normalise(possibilities[0])
+		for _, p := range possibilities[1:] {
+			if normalise(p) != first {
+				continue outer
+			}
+		}
+		possibleValues.Add(knowledge)
+	}
+	return GenericValuationStatement[P, V]{
+		valuation:     pv.f,
+		allowedValues: possibleValues,
+	}
+}
+
+type genericPossibilityWithKnowledge[P, V comparable] struct {
+	possibility P
+	knowledge   V
 }
 
 func (pv PossibilitiesByValuation[P, V]) DoesNotKnowAnswerGivenNormalised(normalise func(P) P) Condition[P] {
-	// TODO
-	return nil
+	normalCount := make(map[genericPossibilityWithKnowledge[P, V]]int)
+	for k, possibilities := range pv.possibilities {
+		for _, p := range possibilities {
+			normalCount[genericPossibilityWithKnowledge[P, V]{normalise(p), k}]++
+		}
+	}
+	return func(p P) bool {
+		return normalCount[genericPossibilityWithKnowledge[P, V]{
+			possibility: normalise(p),
+			knowledge:   pv.f(p),
+		}] > 1
+	}
 }
