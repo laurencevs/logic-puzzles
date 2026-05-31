@@ -1,5 +1,7 @@
 package puzzles
 
+import "github.com/laurencevs/logic-puzzles/internal/set"
+
 type Valuation[P any] func(P) int
 
 // ValuationFromFunc converts a function f: S -> X for some set X to a
@@ -46,6 +48,28 @@ type IValuation[P any] interface {
 var _ IValuation[int] = (*Actor[int])(nil)
 
 type GenericValuation[P any, V comparable] func(P) V
+
+type GenericValuationStatement[P any, V comparable] struct {
+	valuation     GenericValuation[P, V]
+	allowedValues set.Set[V]
+	invert        bool
+}
+
+func (s GenericValuationStatement[P, V]) ConsistentWith(p P) bool {
+	return s.allowedValues.Contains(s.valuation(p)) != s.invert
+}
+
+func (s GenericValuationStatement[P, V]) not() GenericValuationStatement[P, V] {
+	return GenericValuationStatement[P, V]{
+		valuation:     s.valuation,
+		allowedValues: s.allowedValues,
+		invert:        !s.invert,
+	}
+}
+
+func (s GenericValuationStatement[P, V]) Not() Statement[P] {
+	return s.not()
+}
 
 type PossibilitiesByValuation[P any, V comparable] struct {
 	f             GenericValuation[P, V]
