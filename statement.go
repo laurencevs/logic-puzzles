@@ -9,6 +9,7 @@ import (
 // does not directly rule out.
 type Statement[P any] interface {
 	ConsistentWith(p P) bool
+	Not() Statement[P]
 }
 
 type Condition[P any] func(P) bool
@@ -17,11 +18,13 @@ func (c Condition[P]) ConsistentWith(p P) bool {
 	return c(p)
 }
 
-func (c Condition[P]) Not() Condition[P] {
+func (c Condition[P]) Not() Statement[P] {
 	return Condition[P](func(p P) bool {
 		return !c(p)
 	})
 }
+
+var _ Statement[int] = Condition[int](func(int) bool { return false })
 
 // ValuationStatement is a statement whose truth depends only on the value of a
 // particular valuation. A statement by an actor is always a
@@ -37,13 +40,19 @@ func (s ValuationStatement[P]) ConsistentWith(p P) bool {
 	return s.allowedValues.Contains(s.valuation(p)) != s.invert
 }
 
-func (s ValuationStatement[P]) Not() ValuationStatement[P] {
+func (s ValuationStatement[P]) not() ValuationStatement[P] {
 	return ValuationStatement[P]{
 		valuation:     s.valuation,
 		allowedValues: s.allowedValues,
 		invert:        !s.invert,
 	}
 }
+
+func (s ValuationStatement[P]) Not() Statement[P] {
+	return s.not()
+}
+
+var _ Statement[int] = ValuationStatement[int]{}
 
 // Evaluate tests whether the given statement holds for all current
 // possibilities, from an external observer's perspective.
@@ -65,7 +74,7 @@ func (p *Puzzle[P]) ValuationEquals(v Valuation[P], value int) ValuationStatemen
 
 // KnowsAnswer is the statement that the solution has a unique value under the
 // given actor's known valuation, among all remaining possibilities.
-func (a *Actor[P]) KnowsAnswer() ValuationStatement[P] {
+func (a *Actor[P]) knowsAnswer() ValuationStatement[P] {
 	possibleValues := set.New[int]()
 	for knowledgeValue, possiblities := range a.puzzle.possibilitiesByKnowledge[a.knowledge] {
 		if len(possiblities) == 1 {
@@ -78,11 +87,15 @@ func (a *Actor[P]) KnowsAnswer() ValuationStatement[P] {
 	}
 }
 
-func (a *Actor[P]) DoesNotKnowAnswer() ValuationStatement[P] {
-	return a.KnowsAnswer().Not()
+func (a *Actor[P]) KnowsAnswer() Statement[P] {
+	return a.knowsAnswer()
 }
 
-func (a *Actor[P]) KnowsNormalisedAnswer(normalise func(P) P) ValuationStatement[P] {
+func (a *Actor[P]) DoesNotKnowAnswer() Statement[P] {
+	return a.knowsAnswer().not()
+}
+
+func (a *Actor[P]) KnowsNormalisedAnswer(normalise func(P) P) Statement[P] {
 	possibleValues := set.New[int]()
 outer:
 	for knowledge, possibilities := range a.puzzle.possibilitiesByKnowledge[a.knowledge] {
@@ -154,7 +167,7 @@ func (p *Puzzle[P]) Narrate(s Statement[P]) {
 
 // Knows is the statement that the given statement evaluates to true for all
 // solutions that the given actor considers possible based on their knowledge.
-func (a *Actor[P]) Knows(s Statement[P]) ValuationStatement[P] {
+func (a *Actor[P]) knows(s Statement[P]) ValuationStatement[P] {
 	allowedValues := set.New[int]()
 outer:
 	for knowledge, possibilities := range a.puzzle.possibilitiesByKnowledge[a.knowledge] {
@@ -174,10 +187,18 @@ outer:
 	}
 }
 
+func (a *Actor[P]) Knows(s Statement[P]) Statement[P] {
+	return a.knows(s)
+}
+
+func (a *Actor[P]) DoesNotKnow(s Statement[P]) Statement[P] {
+	return a.knows(s).not()
+}
+
 // KnowsWhether is the statement that the given statement has the same truth
 // value for all solutions that the given actor considers possible based on
 // their knowledge.
-func (a *Actor[P]) KnowsWhether(s Statement[P]) ValuationStatement[P] {
+func (a *Actor[P]) knowsWhether(s Statement[P]) ValuationStatement[P] {
 	allowedValues := set.New[int]()
 knowledgeLoop:
 	for knowledge, possibilities := range a.puzzle.possibilitiesByKnowledge[a.knowledge] {
@@ -200,6 +221,14 @@ knowledgeLoop:
 		valuation:     *a.knowledge,
 		allowedValues: allowedValues,
 	}
+}
+
+func (a *Actor[P]) KnowsWhether(s Statement[P]) Statement[P] {
+	return a.knowsWhether(s)
+}
+
+func (a *Actor[P]) DoesNotKnowWhether(s Statement[P]) Statement[P] {
+	return a.knowsWhether(s).not()
 }
 
 // Says makes the truth of the given statement s 'common knowledge' within the
