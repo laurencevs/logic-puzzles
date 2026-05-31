@@ -13,8 +13,8 @@ func main() {
 	solutionSpace := intpair.IntPairs(1, 9, false, true)
 	puzzle := puzzles.NewPuzzle(solutionSpace)
 
-	A := puzzle.NewActorWithKnowledge(intpair.Product)
-	B := puzzle.NewActorWithKnowledge(intpair.Sum)
+	A := puzzles.NewActorWithKnowledge(puzzle, intpair.Product)
+	B := puzzles.NewActorWithKnowledge(puzzle, intpair.Sum)
 
 	A.Says(A.DoesNotKnowAnswer())
 	B.Says(B.DoesNotKnowAnswer())

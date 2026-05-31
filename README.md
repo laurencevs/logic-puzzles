@@ -22,9 +22,9 @@ With this module, the puzzle above is easy to solve (`examples/readme-example/ma
 solutionSpace := intpair.IntPairs(1, 2024, false, false)
 puzzle := puzzles.NewPuzzle(solutionSpace)
 
-Stifado := puzzle.NewActorWithKnowledge(intpair.Sum)
-Pastitsio := puzzle.NewActorWithKnowledge(intpair.Product)
-Dolmadakia := puzzle.NewActorWithKnowledge(intpair.AbsDifference)
+Stifado := puzzles.NewActorWithKnowledge(puzzle, intpair.Sum)
+Pastitsio := puzzles.NewActorWithKnowledge(puzzle, intpair.Product)
+Dolmadakia := puzzles.NewActorWithKnowledge(puzzle, intpair.AbsDifference)
 
 Pastitsio.Says(Pastitsio.Knows(intpair.ProductIsDivisibleBy(20)))
 Stifado.Says(Stifado.Knows(Pastitsio.Knows(Dolmadakia.DoesNotKnowAnswer())))

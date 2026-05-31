@@ -7,31 +7,24 @@ import (
 	"github.com/laurencevs/logic-puzzles/internal/set"
 )
 
-// Knowledge represents the information an actor is given about the solution
-// before any statements are made.
-type Knowledge[P any] *Valuation[P]
-
 type Puzzle[P comparable] struct {
 	// solutionSpace is the initial set of possible solutions to the Puzzle.
 	solutionSpace []P
 	// actors are the characters in the Puzzle.
 	actors []*Actor[P]
-	// possibilitiesByKnowledge represents the set of remaining possible
-	// solutions, conditional on the value of a given piece of knowledge.
-	// One can reason about what solutions an actor considers possible by
-	// considering the possibilitiesByKnowledge values for their knowledge.
-	possibilitiesByKnowledge map[Knowledge[P]]map[int][]P
-	// externalPossibilities represents the set of remaining possibilities
-	// from the perspective of an outside observer who is not privy to any
-	// specific knowledge.
+	// TODO: docs
+	knowledgeStates set.Set[KnowledgeState[P]]
+	// externalPossibilities represents the set of remaining possibilities from
+	// the perspective of an outside observer who is not privy to any specific
+	// knowledge.
 	externalPossibilities []P
 }
 
 func NewPuzzle[P comparable](possibilities []P) *Puzzle[P] {
 	return &Puzzle[P]{
-		solutionSpace:            possibilities,
-		externalPossibilities:    slices.Clone(possibilities),
-		possibilitiesByKnowledge: make(map[Knowledge[P]]map[int][]P),
+		solutionSpace:         possibilities,
+		externalPossibilities: slices.Clone(possibilities),
+		knowledgeStates:       set.New[KnowledgeState[P]](),
 	}
 }
 
@@ -52,23 +45,25 @@ func (p *Puzzle[P]) NewActor() *Actor[P] {
 	return a
 }
 
-func (p *Puzzle[P]) NewKnowledge(v Valuation[P]) Knowledge[P] {
-	p.initialiseKnowledge(&v)
-	return &v
+func (p *Puzzle[P]) initialiseKnowledge(k KnowledgeState[P]) {
+	k.Initialise(p.solutionSpace)
 }
 
-func (p *Puzzle[P]) initialiseKnowledge(k Knowledge[P]) {
-	p.possibilitiesByKnowledge[k] = make(map[int][]P)
-	for _, poss := range p.solutionSpace {
-		val := (*k)(poss)
-		p.possibilitiesByKnowledge[k][val] = append(p.possibilitiesByKnowledge[k][val], poss)
-	}
+// NewKnowledge should be a method on Puzzle, but this requires generic
+// methods (coming soon to Go).
+func NewKnowledge[P, V comparable](p *Puzzle[P], f func(P) V) KnowledgeState[P] {
+	pv := &valuationKnowledgeState[P, V]{valuation: f}
+	p.initialiseKnowledge(pv)
+	p.knowledgeStates.Add(pv)
+	return pv
 }
 
-func (p *Puzzle[P]) NewActorWithKnowledge(v Valuation[P]) *Actor[P] {
-	k := p.NewKnowledge(v)
+// NewActorWithKnowledge should be a method on Puzzle, but this requires
+// generic methods (coming soon to Go).
+func NewActorWithKnowledge[P, V comparable](p *Puzzle[P], f func(P) V) *Actor[P] {
+	k := NewKnowledge(p, f)
 	a := p.NewActor()
-	a.knowledge = k
+	a.KnowledgeState = k
 	return a
 }
 
@@ -80,26 +75,26 @@ func (p *Puzzle[P]) ExternalPossibilities() []P {
 func (p *Puzzle[P]) Reset() {
 	p.externalPossibilities = slices.Clone(p.solutionSpace)
 	copy(p.externalPossibilities, p.solutionSpace)
-	for k := range p.possibilitiesByKnowledge {
+	for k := range p.knowledgeStates {
 		p.initialiseKnowledge(k)
 	}
 }
 
 type Actor[P comparable] struct {
-	Id        int
-	puzzle    *Puzzle[P]
-	knowledge Knowledge[P]
+	Id     int
+	puzzle *Puzzle[P]
+	KnowledgeState[P]
 }
 
 // HasKnowledge sets the actor's knowledge without initialising the internal
 // puzzle state for that knowledge. It should only be used with knowledge
 // values created using Puzzle.NewKnowledge.
-func (a *Actor[P]) HasKnowledge(k Knowledge[P]) {
-	a.knowledge = k
+func (a *Actor[P]) HasKnowledge(k KnowledgeState[P]) {
+	a.KnowledgeState = k
 }
 
-func (a *Actor[P]) PossibilitiesByKnowledge() map[int][]P {
-	return a.puzzle.possibilitiesByKnowledge[a.knowledge]
+func (a *Actor[P]) PossibilitiesByKnowledge() KnowledgeState[P] {
+	return a.KnowledgeState
 }
 
 func NormalisePossibilities[P comparable](ps []P, normalise func(P) P) []P {

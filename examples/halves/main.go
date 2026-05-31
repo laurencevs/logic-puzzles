@@ -13,8 +13,8 @@ func main() {
 	solutionSpace := intpair.IntPairs(1, 30, true, true)
 	puzzle := puzzles.NewPuzzle(solutionSpace)
 
-	A := puzzle.NewActorWithKnowledge(intpair.First)
-	B := puzzle.NewActorWithKnowledge(intpair.Second)
+	A := puzzles.NewActorWithKnowledge(puzzle, intpair.First)
+	B := puzzles.NewActorWithKnowledge(puzzle, intpair.Second)
 
 	B.Says(B.KnowsWhether(SecondIsDoubleFirst).Not())
 	A.Says(A.KnowsWhether(FirstIsDoubleSecond).Not())
@@ -22,11 +22,9 @@ func main() {
 	A.Says(A.KnowsWhether(SecondIsDoubleFirst).Not())
 
 	fmt.Println("B knows A's number:", puzzle.Evaluate(B.KnowsAnswer()))
-	for _, poss := range B.PossibilitiesByKnowledge() {
-		if len(poss) > 0 {
-			fmt.Println("A's number:", poss[0].A)
-			break
-		}
+	for _, p := range B.KnowledgeState.Possibilities() {
+		fmt.Println("A's number:", p.A)
+		break
 	}
 }
 

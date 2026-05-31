@@ -18,30 +18,27 @@ func main() {
 	solutionSpace := possibleStates()
 	puzzle := puzzles.NewPuzzle(solutionSpace)
 
-	p1valuation := puzzles.ValuationFromFunc(solutionSpace, p1Knowledge)
-	player1 := puzzle.NewActorWithKnowledge(p1valuation)
-	p2valuation := puzzles.ValuationFromFunc(solutionSpace, p2Knowledge)
-	player2 := puzzle.NewActorWithKnowledge(p2valuation)
-	p3valuation := puzzles.ValuationFromFunc(solutionSpace, p3Knowledge)
-	player3 := puzzle.NewActorWithKnowledge(p3valuation)
+	player1 := puzzles.NewActorWithKnowledge(puzzle, p1Knowledge)
+	player2 := puzzles.NewActorWithKnowledge(puzzle, p2Knowledge)
+	player3 := puzzles.NewActorWithKnowledge(puzzle, p3Knowledge)
 
 	// Exercise 1.1(a)
 	player1.Says(player1.DoesNotKnowAnswer())
 	player2.Says(player2.DoesNotKnowAnswer())
-	fmt.Println(puzzles.SprintPossibilities(player3.PossibilitiesByKnowledge()[p3valuation(state{
+	fmt.Println(puzzles.SprintPossibilities(player3.PossibilitiesByKnowledge().PossibilitiesForValue(p3Knowledge(state{
 		p1a: 2,
 		p2a: 0,
-	})]))
+	}))))
 	puzzle.Reset()
 
 	// Exercise 1.1(b)
 	player1.Says(player1.DoesNotKnowAnswer())
 	player2.Says(player2.DoesNotKnowAnswer())
 	player3.Says(player3.DoesNotKnowAnswer())
-	fmt.Println(puzzles.SprintPossibilities(player1.PossibilitiesByKnowledge()[p1valuation(state{
+	fmt.Println(puzzles.SprintPossibilities(player1.PossibilitiesByKnowledge().PossibilitiesForValue(p1Knowledge(state{
 		p2a: 0,
 		p3a: 1,
-	})]))
+	}))))
 	puzzle.Reset()
 
 	// Exercise 1.1(c)
@@ -49,10 +46,10 @@ func main() {
 	player2.Says(player2.DoesNotKnowAnswer())
 	player3.Says(player3.DoesNotKnowAnswer())
 	player1.Says(player1.DoesNotKnowAnswer())
-	fmt.Println(puzzles.SprintPossibilities(player2.PossibilitiesByKnowledge()[p2valuation(state{
+	fmt.Println(puzzles.SprintPossibilities(player2.PossibilitiesByKnowledge().PossibilitiesForValue(p2Knowledge(state{
 		p1a: 1,
 		p3a: 1,
-	})]))
+	}))))
 }
 
 // The game state is represented by the number of aces held by each character.

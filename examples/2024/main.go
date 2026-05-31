@@ -23,9 +23,9 @@ func commonSetup2024(allowRepeated bool) *puzzle2024[intpair.IntPair] {
 	possibilities := intpair.IntPairs(1, 2024, false, allowRepeated)
 	puzzle := puzzles.NewPuzzle(possibilities)
 
-	Sophie := puzzle.NewActorWithKnowledge(intpair.Sum)
-	Paul := puzzle.NewActorWithKnowledge(intpair.Product)
-	Dave := puzzle.NewActorWithKnowledge(intpair.AbsDifference)
+	Sophie := puzzles.NewActorWithKnowledge(puzzle, intpair.Sum)
+	Paul := puzzles.NewActorWithKnowledge(puzzle, intpair.Product)
+	Dave := puzzles.NewActorWithKnowledge(puzzle, intpair.AbsDifference)
 
 	return &puzzle2024[intpair.IntPair]{
 		puzzle: puzzle,

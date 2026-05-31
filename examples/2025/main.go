@@ -39,9 +39,9 @@ func puzzle1() {
 	solutionSpace := intpair.IntPairs(1, 2025, false, false)
 	puzzle := puzzles.NewPuzzle(solutionSpace)
 
-	Stifado := puzzle.NewActorWithKnowledge(intpair.Sum)
-	Pastitsio := puzzle.NewActorWithKnowledge(intpair.Product)
-	Dolmadakia := puzzle.NewActorWithKnowledge(intpair.AbsDifference)
+	Stifado := puzzles.NewActorWithKnowledge(puzzle, intpair.Sum)
+	Pastitsio := puzzles.NewActorWithKnowledge(puzzle, intpair.Product)
+	Dolmadakia := puzzles.NewActorWithKnowledge(puzzle, intpair.AbsDifference)
 
 	Dolmadakia.Says(Dolmadakia.Knows(Stifado.DoesNotKnowAnswer()))
 	Stifado.Says(Stifado.Knows(Pastitsio.DoesNotKnowAnswer()))
@@ -80,9 +80,9 @@ func puzzle2() {
 	solutionSpace := inttriple.IntTriplesWithSumWithoutRepetition(2025, true)
 	puzzle := puzzles.NewPuzzle(solutionSpace)
 
-	Stifado := puzzle.NewActorWithKnowledge(inttriple.Pair1Product)
-	Pastitsio := puzzle.NewActorWithKnowledge(inttriple.Pair2Product)
-	Dolmadakia := puzzle.NewActorWithKnowledge(inttriple.Pair3Product)
+	Stifado := puzzles.NewActorWithKnowledge(puzzle, inttriple.Pair1Product)
+	Pastitsio := puzzles.NewActorWithKnowledge(puzzle, inttriple.Pair2Product)
+	Dolmadakia := puzzles.NewActorWithKnowledge(puzzle, inttriple.Pair3Product)
 
 	Stifado.Says(Stifado.Knows(Pastitsio.KnowsNormalisedAnswer(inttriple.Normalise).Not()))
 	Pastitsio.Says(Pastitsio.Knows(Dolmadakia.KnowsNormalisedAnswer(inttriple.Normalise).Not()))
