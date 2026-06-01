@@ -88,7 +88,7 @@ func puzzle2() {
 	Pastitsio.Says(Pastitsio.Knows(Dolmadakia.KnowsNormalisedAnswer(inttriple.Normalise).Not()))
 	Dolmadakia.Says(Dolmadakia.Knows(inttriple.HasNumberIn(sideLengths2025)))
 	Stifado.Says(Stifado.KnowsNormalisedAnswer(inttriple.Normalise).Not())
-	Pastitsio.Says(Pastitsio.Knows(Stifado.DoesNotKnowAnswerGivenNormalised(inttriple.Normalise)))
+	Pastitsio.Says(Pastitsio.Knows(Stifado.KnowsAnswerGivenNormalised(inttriple.Normalise).Not()))
 
 	fmt.Println(puzzles.SprintPossibilities(puzzles.NormalisePossibilities(puzzle.ExternalPossibilities(), inttriple.Normalise)))
 }

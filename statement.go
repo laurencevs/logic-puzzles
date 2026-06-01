@@ -1,8 +1,47 @@
 package puzzles
 
-import (
-	"github.com/laurencevs/logic-puzzles/internal/set"
-)
+// KnowledgeState represents a character's understanding of the puzzle in all
+// possible cases. That is, for every possible solution s, KnowledgeState
+// should be able to tell us what a character would consider possible in a
+// world where s is the solution (this information is exposed by
+// PossibilitiesInCase(s P) []P).
+type KnowledgeState[P any] interface {
+	// Methods for updating a character's knowledge
+
+	// Initialise the KnowledgeState with a set of possible worlds (solutions)
+	Initialise(solutionSpace []P)
+
+	// Update the KnowledgeState by providing a statement s which is to be
+	// taken to be true
+	Update(s Statement[P])
+
+	// Methods for inspecting a character's knowledge as an external observer
+
+	// The solutions that a character with this state of knowledge would
+	// consider possible in a world where s is the solution. If s is not in
+	// PossibilitiesInCase(s) then such a character knows that s is not the
+	// solution because of statements made so far.
+	PossibilitiesInCase(s P) []P
+
+	// All the solutions that a character with this state of knowledge might
+	// consider possible depending on what the actual solution is (that is, in
+	// some possible world)
+	Possibilities() []P
+
+	// Statements made by a character with this state of knowledge
+
+	KnowsAnswer() Statement[P]
+	DoesNotKnowAnswer() Statement[P]
+
+	Knows(s Statement[P]) Statement[P]
+	DoesNotKnow(s Statement[P]) Statement[P]
+
+	KnowsWhether(s Statement[P]) Statement[P]
+	DoesNotKnowWhether(s Statement[P]) Statement[P]
+
+	KnowsNormalisedAnswer(normalise func(P) P) Statement[P]
+	KnowsAnswerGivenNormalised(normalise func(P) P) Statement[P]
+}
 
 // Statement represents a statement about the solution to a Puzzle.
 // ConsistentWith should return true for any possibility that the Statement
@@ -24,61 +63,6 @@ func (c Condition[P]) Not() Statement[P] {
 	})
 }
 
-var _ Statement[int] = Condition[int](func(int) bool { return false })
-
-// ValuationStatement is a statement whose truth depends only on the value of a
-// particular valuation. A statement by an actor is always a
-// ValuationStatement, where the valuation is the same as that pointed to by
-// the actor's Knowledge.
-type ValuationStatement[P any, V comparable] struct {
-	valuation     Valuation[P, V]
-	allowedValues set.Set[V]
-	invert        bool
-}
-
-func (s ValuationStatement[P, V]) ConsistentWith(p P) bool {
-	return s.allowedValues.Contains(s.valuation(p)) != s.invert
-}
-
-func (s ValuationStatement[P, V]) not() ValuationStatement[P, V] {
-	return ValuationStatement[P, V]{
-		valuation:     s.valuation,
-		allowedValues: s.allowedValues,
-		invert:        !s.invert,
-	}
-}
-
-func (s ValuationStatement[P, V]) Not() Statement[P] {
-	return s.not()
-}
-
-var _ Statement[int] = (*ValuationStatement[int, string])(nil)
-
-// Evaluate tests whether the given statement holds for all current
-// possibilities, from an external observer's perspective.
-func (p *Puzzle[P]) Evaluate(s Statement[P]) bool {
-	for _, poss := range p.externalPossibilities {
-		if !s.ConsistentWith(poss) {
-			return false
-		}
-	}
-	return true
-}
-
-func ValuationEquals[P, V comparable](v Valuation[P, V], value V) ValuationStatement[P, V] {
-	return ValuationStatement[P, V]{
-		valuation:     v,
-		allowedValues: set.New(value),
-	}
-}
-
-func ValuationIn[P, V comparable](v Valuation[P, V], values set.Set[V]) ValuationStatement[P, V] {
-	return ValuationStatement[P, V]{
-		valuation:     v,
-		allowedValues: values,
-	}
-}
-
 func filterInPlace[P any](s Statement[P], l *[]P) {
 	i := 0
 	for _, p := range *l {
@@ -88,24 +72,4 @@ func filterInPlace[P any](s Statement[P], l *[]P) {
 		}
 	}
 	*l = (*l)[:i]
-}
-
-// Narrate is the narrator's equivalent of Actor.Says(). It restricts the
-// solution space without 'informing' any characters.
-//
-// Note that this will cause the puzzle's externalPossibilities and
-// possibilitiesByKnowledge to become inconsistent. Narrate should only be used
-// to reveal the solution to the audience at the end of the puzzle.
-func (p *Puzzle[P]) Narrate(s Statement[P]) {
-	filterInPlace(s, &p.externalPossibilities)
-}
-
-// Says makes the truth of the given statement s 'common knowledge' within the
-// puzzle. It does not account for the information implied by the fact that
-// the given actor knows s; for this, it should be combined with a.Knows(s).
-func (a *Actor[P]) Says(s Statement[P]) {
-	filterInPlace(s, &a.puzzle.externalPossibilities)
-	for k := range a.puzzle.knowledgeStates {
-		k.Filter(s)
-	}
 }

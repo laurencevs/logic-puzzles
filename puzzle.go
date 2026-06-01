@@ -8,15 +8,15 @@ import (
 )
 
 type Puzzle[P comparable] struct {
-	// solutionSpace is the initial set of possible solutions to the Puzzle.
+	// solutionSpace is the initial set of possible solutions to the puzzle.
 	solutionSpace []P
-	// actors are the characters in the Puzzle.
+	// actors are the characters in the puzzle.
 	actors []*Actor[P]
-	// TODO: docs
+	// knowledgeStates represents the set of
 	knowledgeStates set.Set[KnowledgeState[P]]
 	// externalPossibilities represents the set of remaining possibilities from
-	// the perspective of an outside observer who is not privy to any specific
-	// knowledge.
+	// the perspective of an outside observer who is not privy to any knowledge
+	// of the solution beyond public statements made within the puzzle.
 	externalPossibilities []P
 }
 
@@ -80,6 +80,28 @@ func (p *Puzzle[P]) Reset() {
 	}
 }
 
+// Evaluate tests whether the given statement holds for all current
+// possibilities, from an external observer's perspective.
+func (p *Puzzle[P]) Evaluate(s Statement[P]) bool {
+	for _, poss := range p.externalPossibilities {
+		if !s.ConsistentWith(poss) {
+			return false
+		}
+	}
+	return true
+}
+
+// Narrate is the narrator's equivalent of Actor.Says(). It restricts the
+// solution space without informing any characters (that is, updating their
+// KnowledgeState).
+//
+// Note that this will cause the puzzle's externalPossibilities and
+// knowledgeStates to become inconsistent. Narrate should only be used
+// to reveal the solution to the audience at the end of the puzzle.
+func (p *Puzzle[P]) Narrate(s Statement[P]) {
+	filterInPlace(s, &p.externalPossibilities)
+}
+
 type Actor[P comparable] struct {
 	Id     int
 	puzzle *Puzzle[P]
@@ -95,6 +117,16 @@ func (a *Actor[P]) HasKnowledge(k KnowledgeState[P]) {
 
 func (a *Actor[P]) PossibilitiesByKnowledge() KnowledgeState[P] {
 	return a.KnowledgeState
+}
+
+// Says makes the truth of the given statement s 'common knowledge' within the
+// puzzle. It does not account for the information implied by the fact that
+// the given actor knows s; for this, it should be combined with a.Knows(s).
+func (a *Actor[P]) Says(s Statement[P]) {
+	filterInPlace(s, &a.puzzle.externalPossibilities)
+	for k := range a.puzzle.knowledgeStates {
+		k.Update(s)
+	}
 }
 
 func NormalisePossibilities[P comparable](ps []P, normalise func(P) P) []P {

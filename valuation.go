@@ -4,36 +4,52 @@ import "github.com/laurencevs/logic-puzzles/internal/set"
 
 type Valuation[P any, V comparable] func(P) V
 
-// KnowledgeState represents the information an actor is given about the solution
-// before any statements are made.
-// TODO: update outdated description.
-type KnowledgeState[P any] interface {
-	Initialise(solutionSpace []P)
-
-	Filter(s Statement[P])
-
-	PossibilitiesForValue(v any) []P
-	Possibilities() []P
-
-	KnowsAnswer() Statement[P]
-	DoesNotKnowAnswer() Statement[P]
-
-	Knows(s Statement[P]) Statement[P]
-	DoesNotKnow(s Statement[P]) Statement[P]
-
-	KnowsWhether(s Statement[P]) Statement[P]
-	DoesNotKnowWhether(s Statement[P]) Statement[P]
-
-	KnowsNormalisedAnswer(normalise func(P) P) Statement[P]
-	DoesNotKnowAnswerGivenNormalised(normalise func(P) P) Condition[P]
+// ValuationStatement is a statement whose truth depends only on the value of a
+// particular Valuation. A statement by an Actor is always a
+// ValuationStatement, where the Valuation is the same as that pointed to by
+// the actor's KnowledgeState.
+type ValuationStatement[P any, V comparable] struct {
+	valuation     Valuation[P, V]
+	allowedValues set.Set[V]
+	invert        bool
 }
 
+func (s ValuationStatement[P, V]) ConsistentWith(p P) bool {
+	return s.allowedValues.Contains(s.valuation(p)) != s.invert
+}
+
+func (s ValuationStatement[P, V]) not() ValuationStatement[P, V] {
+	return ValuationStatement[P, V]{
+		valuation:     s.valuation,
+		allowedValues: s.allowedValues,
+		invert:        !s.invert,
+	}
+}
+
+func (s ValuationStatement[P, V]) Not() Statement[P] {
+	return s.not()
+}
+
+func ValuationEquals[P, V comparable](v Valuation[P, V], value V) ValuationStatement[P, V] {
+	return ValuationStatement[P, V]{
+		valuation:     v,
+		allowedValues: set.New(value),
+	}
+}
+
+func ValuationIn[P, V comparable](v Valuation[P, V], values set.Set[V]) ValuationStatement[P, V] {
+	return ValuationStatement[P, V]{
+		valuation:     v,
+		allowedValues: values,
+	}
+}
+
+// valuationKnowledgeState represents the state of knowledge of a character who
+// has been told the value of some function (Valuation) of the solution.
 type valuationKnowledgeState[P comparable, V comparable] struct {
 	valuation     Valuation[P, V]
 	possibilities map[V][]P
 }
-
-var _ KnowledgeState[int] = (*valuationKnowledgeState[int, string])(nil)
 
 func (pv *valuationKnowledgeState[P, V]) Initialise(solutionSpace []P) {
 	pv.possibilities = make(map[V][]P)
@@ -43,7 +59,7 @@ func (pv *valuationKnowledgeState[P, V]) Initialise(solutionSpace []P) {
 	}
 }
 
-func (pv *valuationKnowledgeState[P, V]) Filter(s Statement[P]) {
+func (pv *valuationKnowledgeState[P, V]) Update(s Statement[P]) {
 	newPossibilities := make(map[V][]P)
 	for value, possibilities := range pv.possibilities {
 		filterInPlace(s, &possibilities)
@@ -54,9 +70,8 @@ func (pv *valuationKnowledgeState[P, V]) Filter(s Statement[P]) {
 	pv.possibilities = newPossibilities
 }
 
-func (pv *valuationKnowledgeState[P, V]) PossibilitiesForValue(v any) []P {
-	vv := v.(V)
-	return pv.possibilities[vv]
+func (pv *valuationKnowledgeState[P, V]) PossibilitiesInCase(s P) []P {
+	return pv.possibilities[pv.valuation(s)]
 }
 
 func (pv *valuationKnowledgeState[P, V]) Possibilities() []P {
@@ -83,8 +98,8 @@ func (pv *valuationKnowledgeState[P, V]) KnowsAnswer() Statement[P] {
 	return pv.knowsAnswer()
 }
 
-// KnowsAnswer is the statement that the solution does not have a unique value
-// under the given valuation, among all remaining possibilities.
+// DoesNotKnowAnswer is the statement that the solution does not have a unique
+// value under the given valuation, among all remaining possibilities.
 func (pv *valuationKnowledgeState[P, V]) DoesNotKnowAnswer() Statement[P] {
 	return pv.knowsAnswer().not()
 }
@@ -116,7 +131,7 @@ func (pv *valuationKnowledgeState[P, V]) Knows(s Statement[P]) Statement[P] {
 // true for all solutions that the given actor considers possible based on
 // their knowledge.
 //
-// Note that k.Knows(s).Not() is not the same as k.Knows(s.Not())!
+// Note that k.Knows(s).Not() is not the same as k.Knows(s.Not()).
 func (pv *valuationKnowledgeState[P, V]) DoesNotKnow(s Statement[P]) Statement[P] {
 	return pv.knows(s).not()
 }
@@ -179,26 +194,26 @@ outer:
 	return ValuationIn(pv.valuation, possibleValues)
 }
 
-type genericPossibilityWithKnowledge[P, V comparable] struct {
+type possibilityWithKnowledge[P, V comparable] struct {
 	possibility P
 	knowledge   V
 }
 
-// DoesNotKnowAnswerGivenNormalised is the statement that even if the given
-// actor were told the normalised value of the solution, they would not know
-// the solution. That is, the solution has a non-unique normalised value among
-// possibilities consistent with the actor's known valuation.
-func (pv *valuationKnowledgeState[P, V]) DoesNotKnowAnswerGivenNormalised(normalise func(P) P) Condition[P] {
-	normalCount := make(map[genericPossibilityWithKnowledge[P, V]]int)
+// KnowsAnswerGivenNormalised is the statement that if the given actor were
+// told the normalised value of the solution, they would know the solution.
+// That is, the solution has a unique normalised value among possibilities
+// consistent with the actor's known valuation.
+func (pv *valuationKnowledgeState[P, V]) KnowsAnswerGivenNormalised(normalise func(P) P) Statement[P] {
+	normalCount := make(map[possibilityWithKnowledge[P, V]]int)
 	for k, possibilities := range pv.possibilities {
 		for _, p := range possibilities {
-			normalCount[genericPossibilityWithKnowledge[P, V]{normalise(p), k}]++
+			normalCount[possibilityWithKnowledge[P, V]{normalise(p), k}]++
 		}
 	}
-	return func(p P) bool {
-		return normalCount[genericPossibilityWithKnowledge[P, V]{
+	return Condition[P](func(p P) bool {
+		return normalCount[possibilityWithKnowledge[P, V]{
 			possibility: normalise(p),
 			knowledge:   pv.valuation(p),
-		}] > 1
-	}
+		}] <= 1
+	})
 }
