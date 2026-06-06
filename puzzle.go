@@ -12,11 +12,15 @@ type Puzzle[P comparable] struct {
 	solutionSpace []P
 	// actors are the characters in the puzzle.
 	actors []*Actor[P]
-	// knowledgeStates represents the set of
+	// knowledgeStates contains the set of states representing what the actors
+	// know (or would know, in each possible case). Two actors can share a
+	// KnowledgeState if they are given the same information about the puzzle
+	// solution.
 	knowledgeStates set.Set[KnowledgeState[P]]
 	// externalPossibilities represents the set of remaining possibilities from
 	// the perspective of an outside observer who is not privy to any knowledge
-	// of the solution beyond public statements made within the puzzle.
+	// of the solution beyond public statements by characters in the puzzle, or
+	// by the narrator.
 	externalPossibilities []P
 }
 
@@ -50,7 +54,7 @@ func (p *Puzzle[P]) initialiseKnowledge(k KnowledgeState[P]) {
 }
 
 // NewKnowledge should be a method on Puzzle, but this requires generic
-// methods (coming soon to Go).
+// methods (coming in Go 1.27).
 func NewKnowledge[P, V comparable](p *Puzzle[P], f func(P) V) KnowledgeState[P] {
 	pv := &valuationKnowledgeState[P, V]{valuation: f}
 	p.initialiseKnowledge(pv)
@@ -59,7 +63,7 @@ func NewKnowledge[P, V comparable](p *Puzzle[P], f func(P) V) KnowledgeState[P] 
 }
 
 // NewActorWithKnowledge should be a method on Puzzle, but this requires
-// generic methods (coming soon to Go).
+// generic methods (coming in Go 1.27).
 func NewActorWithKnowledge[P, V comparable](p *Puzzle[P], f func(P) V) *Actor[P] {
 	k := NewKnowledge(p, f)
 	a := p.NewActor()
